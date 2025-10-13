@@ -36,7 +36,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         style={[
           {
             position: "absolute",
-            backgroundColor: "#723FEB",
+            backgroundColor: "#353839",
             borderRadius: 30,
             marginHorizontal: 12,
             height: dimensions.height - 15,
@@ -82,7 +82,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             onLongPress={onLongPress}
             isFocused={isFocused}
             routeName={route.name as "home" | "message" | "report" | "profile"}
-            color={isFocused ? "#673ab7" : "#222"}
+            color={isFocused ? "#414a4c" : "#222"}
             label={typeof label === "string" ? label : route.name}
           />
         );
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: "row",
     position: "absolute",
-    bottom: 15,
+    bottom: 10,
     justifyContent: "space-between",
     alignItems: "center",
     backgroundColor: "white",

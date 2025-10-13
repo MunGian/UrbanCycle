@@ -1,0 +1,281 @@
+import { Route } from "@/lib/utils/routes";
+import { supabase } from "@/lib/utils/supabase";
+import Feather from "@expo/vector-icons/Feather";
+import Fontisto from "@expo/vector-icons/Fontisto";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  Alert,
+  Image,
+  Keyboard,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
+
+// Tells Supabase Auth to continuously refresh the session automatically if
+// the app is in the foreground. When this is added, you will continue to receive
+// `onAuthStateChange` events with the `TOKEN_REFRESHED` or `SIGNED_OUT` event
+// if the user's session is terminated. This should only be registered once.
+// AppState.addEventListener("change", (state) => {
+//   if (state === "active") {
+//     console.log("refreshing token......................");
+//     supabase.auth.startAutoRefresh();
+//   } else {
+//     supabase.auth.stopAutoRefresh();
+//   }
+// });
+
+// console.log("supabase", supabase.auth);
+
+const Login: React.FC = () => {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isEmailValid, setIsEmailValid] = useState(true);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [passwordVisibility, setPasswordVisibility] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const signInWithGoogle = async () => {
+    console.log("signInWithGoogle");
+  };
+
+  async function signInWithEmail() {
+    console.log("signInWithEmail", email, password);
+    // setLoading(true);
+    // const { error } = await supabase.auth.signInWithPassword({
+    //   email: email,
+    //   password: password,
+    // });
+
+    // if (error) Alert.alert(error.message);
+    // setLoading(false);
+  }
+
+  async function signUpWithEmail() {
+    setLoading(true);
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    });
+
+    if (error) Alert.alert(error.message);
+    if (!session)
+      Alert.alert("Please check your inbox for email verification!");
+    setLoading(false);
+  }
+
+  const onEmailTextChange = (text: string) => {
+    setEmail(text);
+    setIsEmailValid(validateEmail(text));
+  };
+
+  const onPasswordTextChange = (text: string) => {
+    console.log("password text change:", text);
+    setPassword(text);
+  };
+
+  const validateEmail = (email: string) => {
+    if (!email || email.length === 0) return true;
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  // Validation function
+  const validatePassword = (password: string) => {
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return strongPasswordRegex.test(password);
+  };
+
+  const onClearEmailText = () => {
+    setEmail("");
+  };
+
+  const togglePasswordVisibility = () => {
+    setPasswordVisibility(!passwordVisibility);
+  };
+
+  const isLoginDisabled =
+    email.length === 0 || !isEmailValid || password.length === 0 || loading;
+  console.log("isLoginDisabled", isLoginDisabled);
+
+  return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View className="flex-1 flex-col px-5 pt-5 bg-body justify-start items-start">
+        <View className="flex flex-row w-full justify-between">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Feather name="arrow-left" size={26} color="black" />
+          </TouchableOpacity>
+          <Text className="pl-5 text-xl font-semibold">UrbanCycle Login</Text>
+          <TouchableOpacity onPress={() => router.push(Route.SignUpPage)}>
+            <Text className="text-brandPrimary text-lg font-medium">
+              Sign Up
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View className="h-8" />
+        <View className="flex flex-row bg-cardBg rounded-full px-4 py-1.5 gap-2">
+          <Text className="text-base font-semibold">Sign in with Email</Text>
+        </View>
+        <View className="h-6" />
+        <View className="flex flex-col w-full">
+          <View
+            className={`flex flex-row w-full mb-2 items-center justify-between bg-cardBg rounded-xl px-4 py-1 gap-1 
+              ${isEmailFocused ? "border border-black" : ""} ${!isEmailValid && !isEmailFocused ? "border border-red-500" : ""}`}
+          >
+            <Fontisto name="email" size={20} color="black" />
+            <TextInput
+              className="flex-1 text-lg"
+              placeholder="Email"
+              value={email}
+              onChangeText={onEmailTextChange}
+              autoCapitalize={"none"}
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              onFocus={() => setIsEmailFocused(true)}
+              onBlur={() => {
+                setIsEmailFocused(false);
+                setIsEmailValid(validateEmail(email));
+              }}
+            />
+            {email.length > 0 && isEmailFocused && (
+              <TouchableOpacity onPress={onClearEmailText}>
+                <MaterialIcons name="cancel" size={18} color="gray" />
+              </TouchableOpacity>
+            )}
+          </View>
+          {!isEmailValid && !isEmailFocused && (
+            <Text className="text-red-500 mb-1">
+              Please enter a valid email address.
+            </Text>
+          )}
+          <View className="h-4" />
+          <View
+            className={`flex flex-row w-full items-center justify-between bg-cardBg rounded-xl px-4 py-1 gap-1 ${isPasswordFocused ? "border border-black" : ""}`}
+          >
+            <Feather name="lock" size={20} color="black" />
+            <TextInput
+              secureTextEntry={passwordVisibility}
+              className="flex-1 text-lg font-normal"
+              placeholder="Password"
+              value={password}
+              onChangeText={onPasswordTextChange}
+              onFocus={() => setIsPasswordFocused(true)}
+              onBlur={() => setIsPasswordFocused(false)}
+            />
+            <TouchableOpacity onPress={togglePasswordVisibility}>
+              {passwordVisibility ? (
+                <Feather name="eye-off" size={18} color="gray" />
+              ) : (
+                <Feather name="eye" size={18} color="gray" />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View className="h-8" />
+        <TouchableOpacity
+          onPress={signInWithEmail}
+          disabled={isLoginDisabled}
+          className={`flex rounded-full py-4 w-full items-center justify-center ${
+            isLoginDisabled
+              ? // ? "bg-orange-400 opacity-50"
+                // : "bg-orange-400 opacity-100"
+                "bg-brandPrimary opacity-50"
+              : "bg-brandPrimary opacity-100"
+          }`}
+        >
+          <Text className="text-black text-lg font-medium">Login Now</Text>
+        </TouchableOpacity>
+        <View className="h-8" />
+        <View className="flex flex-row items-center w-full">
+          <View className="flex-1 h-[1px] bg-gray-300" />
+          <Text className="mx-4 text-base text-gray-500 text-center">
+            Or continue with
+          </Text>
+          <View className="flex-1 h-[1px] bg-gray-300" />
+        </View>
+        <View className="h-8" />
+        <View className="flex flex-col w-full gap-4">
+          <TouchableOpacity
+            onPress={signInWithGoogle}
+            className="flex flex-row border border-gray-300 rounded-full px-4 py-3 items-center justify-center gap-2"
+          >
+            <Image
+              source={{
+                uri: "https://storage.googleapis.com/libraries-lib-production/images/GoogleLogo-canvas-404-300px.original.png",
+              }}
+              style={{ width: 24, height: 24 }}
+              resizeMode="contain"
+            />
+            <Text className="text-lg font-medium">Google</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </TouchableWithoutFeedback>
+    // <View style={styles.container}>
+    //   <View style={[styles.verticallySpaced, styles.mt20]}>
+    //     <Input
+    //       label="Email"
+    //       leftIcon={{ type: "font-awesome", name: "envelope" }}
+    //       onChangeText={(text) => setEmail(text)}
+    //       value={email}
+    //       placeholder="email@address.com"
+    //       autoCapitalize={"none"}
+    //     />
+    //   </View>
+    //   <View style={styles.verticallySpaced}>
+    //     <Input
+    //       label="Password"
+    //       leftIcon={{ type: "font-awesome", name: "lock" }}
+    //       onChangeText={(text) => setPassword(text)}
+    //       value={password}
+    //       secureTextEntry={true}
+    //       placeholder="Password"
+    //       autoCapitalize={"none"}
+    //     />
+    //   </View>
+    //   <View style={[styles.verticallySpaced, styles.mt20]}>
+    //     <Button
+    //       title="Sign in"
+    //       disabled={loading}
+    //       onPress={() => signInWithEmail()}
+    //     />
+    //   </View>
+    //   <View style={styles.verticallySpaced}>
+    //     <Button
+    //       title="Sign up"
+    //       disabled={loading}
+    //       onPress={() => signUpWithEmail()}
+    //     />
+    //   </View>
+    // </View>
+  );
+};
+
+export default Login;
+
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 40,
+    padding: 12,
+  },
+  verticallySpaced: {
+    paddingTop: 4,
+    paddingBottom: 4,
+    alignSelf: "stretch",
+  },
+  mt20: {
+    marginTop: 20,
+  },
+});

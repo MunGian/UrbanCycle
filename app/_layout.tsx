@@ -1,6 +1,8 @@
-import { useHideNavigationBar } from "@/constants/global";
+import { SooBottomSheetProvider } from "@/components/SooBottomSheetProvider";
+import { ToastProvider } from "@/components/ToastProvider";
 import { Stack } from "expo-router";
 import { StatusBar } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import "../global.css";
@@ -10,28 +12,34 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  useHideNavigationBar();
+  // useHideNavigationBar();
 
   return (
     <SafeAreaProvider>
-      {/* Apply safe area only at the top (for status bar) */}
-      <SafeAreaView
-        style={{ flex: 1, backgroundColor: "#673ab7" }}
-        edges={["top", "left", "right", "bottom"]}
-      >
-        <StatusBar
-          barStyle="dark-content"
-          backgroundColor={"#673ab7"}
-          animated={true}
-        />
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          {/* <Stack.Screen
-          name="modal"
-          options={{ presentation: "modal", title: "Modal" }}
-        /> */}
-        </Stack>
-      </SafeAreaView>
+      <GestureHandlerRootView className="flex-1">
+        <SafeAreaView className="flex-1 bg-body">
+          <SooBottomSheetProvider>
+            <ToastProvider>
+              <StatusBar
+                barStyle="dark-content"
+                backgroundColor={"#fff"}
+                animated={true}
+              />
+              <Stack
+                initialRouteName="(tabs)"
+                screenOptions={{ headerShown: false }}
+              >
+                <Stack.Screen name="auth" />
+                <Stack.Screen name="(tabs)" />
+                {/* <Stack.Screen
+            name="modal"
+            options={{ presentation: "modal", title: "Modal" }}
+          /> */}
+              </Stack>
+            </ToastProvider>
+          </SooBottomSheetProvider>
+        </SafeAreaView>
+      </GestureHandlerRootView>
     </SafeAreaProvider>
   );
 }

@@ -64,7 +64,10 @@ export const TabBarButton = ({
         })}
       </Animated.View>
       <Animated.Text
-        style={[{ color: color, fontSize: 12 }, animatedTextStyle]}
+        style={[
+          { color: color, fontSize: 12, fontWeight: "600" },
+          animatedTextStyle,
+        ]}
       >
         {label}
       </Animated.Text>
@@ -77,6 +80,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: 4,
+    gap: 2,
   },
 });

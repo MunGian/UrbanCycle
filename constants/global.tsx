@@ -5,8 +5,8 @@ import { AppState } from "react-native";
 // Custom hook to hide the navigation bar and reapply settings when app comes to foreground
 export function useHideNavigationBar() {
   useEffect(() => {
-    const hideBar = () => {
-      NavigationBar.setVisibilityAsync("hidden");
+    const hideBar = async () => {
+      await NavigationBar.setVisibilityAsync("hidden");
     };
     hideBar(); // run once on mount
     const sub = AppState.addEventListener("change", (state) => {
