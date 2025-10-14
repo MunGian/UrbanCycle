@@ -12,8 +12,7 @@ import {
 
 import AppLogo from "@/assets/images/inAppIconUse.png";
 import { SooBottomSheet } from "@/components/SooBottomSheetProvider";
-import { FlatList } from "react-native-gesture-handler";
-import SignUpBottomSheet from "./components/SignUpBottomSheet";
+import SignUpEmailBottomSheet from "./components/SignUpEmailBottomSheet";
 
 // Tells Supabase Auth to continuously refresh the session automatically if
 // the app is in the foreground. When this is added, you will continue to receive
@@ -34,36 +33,26 @@ const Signup: React.FC = () => {
   const router = useRouter();
 
   const onContinuePress = () => {
-    SooBottomSheet.open({
+    SooBottomSheet.push({
       title: "Sign up with Email",
       child: (
-        // <SignUpBottomSheet />
-        <FlatList
-          data={[1, 2, 3]}
-          keyExtractor={(item: any) => item.toString()}
-          renderItem={() => <SignUpBottomSheet />}
-          className="max-h-96"
-          scrollEnabled
-          nestedScrollEnabled
-          showsVerticalScrollIndicator={false}
-        />
+        <SignUpEmailBottomSheet />
+        // <FlatList
+        //   data={[1, 2, 3]}
+        //   keyExtractor={(item: any) => item.toString()}
+        //   renderItem={() => <SignUpBottomSheet />}
+        //   className="max-h-96"
+        //   scrollEnabled
+        //   nestedScrollEnabled
+        //   showsVerticalScrollIndicator={false}
+        // />
       ),
       needPadding: true,
     });
   };
 
-  const signUpWithEmail = async () => {
-    console.log("signUpWithEmail");
-  };
-
   const signUpWithGoogle = async () => {
     console.log("signUpWithGoogle");
-  };
-
-  const validateEmail = (email: string) => {
-    if (!email || email.length === 0) return true;
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
   };
 
   return (

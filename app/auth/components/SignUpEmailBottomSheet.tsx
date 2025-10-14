@@ -10,19 +10,20 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import SignUpPasswordBottomSheet from "./SignUpPasswordBottomSheet";
 
 const { height: screenHeight } = Dimensions.get("window");
 
-const SignUpBottomSheet: React.FC = () => {
+const SignUpEmailBottomSheet: React.FC = () => {
   const isKeyboardVisible = useRef(false);
   const [email, setEmail] = useState("");
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(true);
 
   const onContinuePress = () => {
-    SooBottomSheet.open({
-      title: "Sign up with Email",
-      child: <SignUpBottomSheet />,
+    SooBottomSheet.push({
+      title: "Enter your password",
+      child: <SignUpPasswordBottomSheet email={email} />,
       needPadding: true,
     });
   };
@@ -107,7 +108,7 @@ const SignUpBottomSheet: React.FC = () => {
       />
       <View className="h-8" />
       <TouchableOpacity
-        onPress={signUpWithEmail}
+        onPress={onContinuePress}
         disabled={isLoginDisabled}
         className={`flex rounded-full py-4 w-full items-center justify-center ${
           isLoginDisabled
@@ -130,4 +131,4 @@ const SignUpBottomSheet: React.FC = () => {
   );
 };
 
-export default SignUpBottomSheet;
+export default SignUpEmailBottomSheet;

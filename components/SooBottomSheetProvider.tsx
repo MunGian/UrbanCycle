@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import SooBottomSheetProps, { SooBottomSheetRef } from "./SooBottomSheet";
+import React, { useEffect, useState } from "react";
+import SooBottomSheetProps from "./SooBottomSheet";
 
 type OpenSheetParams = {
   title?: string;
@@ -7,23 +7,47 @@ type OpenSheetParams = {
   needPadding?: boolean;
 };
 
+type SheetItem = OpenSheetParams & { id: number };
+
 class BottomSheetController {
-  private ref: React.RefObject<SooBottomSheetRef> | null = null;
+  private addSheet: ((sheet: SheetItem) => void) | null = null;
+  private removeSheet: ((id: number) => void) | null = null;
+  private removeAllSheets: (() => void) | null = null;
 
-  register(ref: React.RefObject<SooBottomSheetRef>) {
-    this.ref = ref;
+  register(
+    add: (sheet: SheetItem) => void,
+    remove: (id: number) => void,
+    removeAll: () => void
+  ) {
+    this.addSheet = add;
+    this.removeSheet = remove;
+    this.removeAllSheets = removeAll;
   }
 
-  open(params: OpenSheetParams) {
-    this.ref?.current?.openSheet(
-      params.title,
-      params.child,
-      params.needPadding
-    );
+  // Add new sheet
+  push(params: OpenSheetParams) {
+    // Keyboard.dismiss();
+    setTimeout(() => {
+      if (this.addSheet) {
+        this.addSheet({ ...params, id: Date.now() });
+      }
+    }, 50);
   }
 
-  close() {
-    this.ref?.current?.closeSheet();
+  // Remove the latest sheet (top of stack)
+  pop() {
+    if (this.removeSheet) {
+      this.removeSheet(-1);
+    }
+  }
+
+  // Remove all stacks
+  popAll() {
+    this.removeAllSheets?.();
+  }
+
+  popById(id: number) {
+    this.removeSheet?.(id);
   }
 }
 
@@ -35,18 +59,36 @@ export const SooBottomSheetProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const ref = useRef<SooBottomSheetRef>(
-    null
-  ) as React.RefObject<SooBottomSheetRef>;
+  const [sheetStack, setSheetStack] = useState<SheetItem[]>([]);
+
+  const addSheet = (sheet: SheetItem) => {
+    setSheetStack((prev) => [...prev, sheet]);
+  };
+
+  const removeSheet = (id: number) => {
+    setSheetStack((prev) =>
+      id === -1 ? prev.slice(0, -1) : prev.filter((s) => s.id !== id)
+    );
+  };
+
+  const removeAllSheets = () => setSheetStack([]);
 
   useEffect(() => {
-    return SooBottomSheet.register(ref);
+    SooBottomSheet.register(addSheet, removeSheet, removeAllSheets);
   }, []);
 
   return (
     <>
       {children}
-      <SooBottomSheetProps ref={ref} />
+      {sheetStack.map((sheet) => (
+        <SooBottomSheetProps
+          key={sheet.id}
+          title={sheet.title}
+          child={sheet.child}
+          needPadding={sheet.needPadding}
+          sheetId={sheet.id}
+        />
+      ))}
     </>
   );
 };
