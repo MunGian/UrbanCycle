@@ -2,7 +2,7 @@ import EmphasizedText from "@/components/EmphasizedText";
 import { SooBottomSheet } from "@/components/SooBottomSheetProvider";
 import { Fontisto, MaterialIcons } from "@expo/vector-icons";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   Dimensions,
   Platform,
@@ -15,10 +15,9 @@ import SignUpPasswordBottomSheet from "./SignUpPasswordBottomSheet";
 const { height: screenHeight } = Dimensions.get("window");
 
 const SignUpEmailBottomSheet: React.FC = () => {
-  const isKeyboardVisible = useRef(false);
-  const [email, setEmail] = useState("");
-  const [isEmailFocused, setIsEmailFocused] = useState(false);
-  const [isEmailValid, setIsEmailValid] = useState(true);
+  const [email, setEmail] = useState<string>("");
+  const [isEmailFocused, setIsEmailFocused] = useState<boolean>(false);
+  const [isEmailValid, setIsEmailValid] = useState<boolean>(true);
 
   const onContinuePress = () => {
     SooBottomSheet.push({

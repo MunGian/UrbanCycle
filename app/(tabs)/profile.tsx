@@ -1,8 +1,10 @@
+import { SooBottomSheet } from "@/components/SooBottomSheetProvider";
 import { useToast } from "@/components/ToastProvider";
 import { Route } from "@/lib/utils/routes";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Button, Text, TouchableOpacity, View } from "react-native";
+import SignUpEmailBottomSheet from "../auth/components/SignUpEmailBottomSheet";
 
 const Profile: React.FC = () => {
   const router = useRouter();
@@ -21,6 +23,17 @@ const Profile: React.FC = () => {
       <Button
         title="Show Success Toast"
         onPress={() => showToast("Data saved successfully!", "success")}
+      />
+      <View className="h-24" />
+      <Button
+        title="testing bottomsheet"
+        onPress={() => {
+          SooBottomSheet.push({
+            title: "Enter your password",
+            child: <SignUpEmailBottomSheet />,
+            needPadding: true,
+          });
+        }}
       />
     </View>
   );

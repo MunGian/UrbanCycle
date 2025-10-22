@@ -4,7 +4,7 @@ import BottomSheet, {
   BottomSheetView,
   TouchableWithoutFeedback,
 } from "@gorhom/bottom-sheet";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   Dimensions,
   Keyboard,
@@ -22,6 +22,7 @@ interface SooBottomSheetProps {
   title?: string;
   child: React.ReactNode;
   needPadding?: boolean;
+  isClosing?: boolean;
 }
 
 const SooBottomSheet: React.FC<SooBottomSheetProps> = ({
@@ -29,13 +30,21 @@ const SooBottomSheet: React.FC<SooBottomSheetProps> = ({
   title,
   child,
   needPadding = false,
+  isClosing = false,
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // Automatically close when flagged, to handle swipe-from-edge or related native gesture to close
+  useEffect(() => {
+    if (isClosing) {
+      bottomSheetRef.current?.close();
+    }
+  }, [isClosing]);
 
   const closeSheet = () => {
     bottomSheetRef.current?.close(); // to have the slide down effect if multiple sheets exist
     Keyboard.dismiss();
-    // then only run BottomSheetController.pop() in BoToomSheet's onClose(), to give closure a smoother effect
+    // then only run BottomSheetController.pop() in BottomSheet's onClose(), to give closure a smoother effect
     // BottomSheetController.pop(); // remove from stack in provider
   };
 
@@ -65,8 +74,8 @@ const SooBottomSheet: React.FC<SooBottomSheetProps> = ({
       enableContentPanningGesture={true}
       enableOverDrag={false}
       enableBlurKeyboardOnGesture={true}
-      keyboardBehavior="extend"
-      keyboardBlurBehavior="none"
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
       onChange={handleSheetChanges}
       onClose={() => {
         // This will run after the slide-down animation

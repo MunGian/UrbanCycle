@@ -11,7 +11,9 @@ import {
 } from "react-native";
 
 import AppLogo from "@/assets/images/inAppIconUse.png";
+import EmphasizedText from "@/components/EmphasizedText";
 import { SooBottomSheet } from "@/components/SooBottomSheetProvider";
+import { useBottomSheetBackHandler } from "@/hooks/useSooBottomSheetBackHandler";
 import SignUpEmailBottomSheet from "./components/SignUpEmailBottomSheet";
 
 // Tells Supabase Auth to continuously refresh the session automatically if
@@ -30,6 +32,10 @@ import SignUpEmailBottomSheet from "./components/SignUpEmailBottomSheet";
 // console.log("supabase", supabase.auth);
 console.log("Sign Upppppppppppppppppppppppp");
 const Signup: React.FC = () => {
+  // Add this hook to any file using SooBottomSheet
+  // Handles bottom sheet back automatically
+  useBottomSheetBackHandler();
+
   const router = useRouter();
 
   const onContinuePress = () => {
@@ -110,6 +116,19 @@ const Signup: React.FC = () => {
             <Text className="text-lg font-medium">Google</Text>
           </TouchableOpacity>
         </View>
+        <View className="h-6" />
+        <EmphasizedText
+          text="By proceeding with this application, you acknowledge that you have read, understood, and agree to be bound by our <em>Terms of Service</em> and <em>Privacy Policy</em>."
+          className="text-gray-700 text-sm leading-relaxed text-justify"
+          emClassName="text-blue-600 font-semibold"
+          onEmphasizedPress={(emText) => {
+            if (emText === "Terms of Service") {
+              console.log("Open Terms of Service");
+            } else if (emText === "Privacy Policy") {
+              console.log("Open Privacy Policy");
+            }
+          }}
+        />
       </View>
     </TouchableWithoutFeedback>
   );

@@ -1,14 +1,19 @@
 import EmphasizedText from "@/components/EmphasizedText";
-import { Fontisto, MaterialIcons } from "@expo/vector-icons";
+import { Route } from "@/lib/utils/routes";
+import { supabase } from "@/lib/utils/supabase";
+import { Feather } from "@expo/vector-icons";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
-import React, { useRef, useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
+  Alert,
   Dimensions,
   Platform,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 const { height: screenHeight } = Dimensions.get("window");
 
@@ -19,36 +24,84 @@ interface SignUpPasswordBottomSheetProps {
 const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
   email,
 }) => {
-  const isKeyboardVisible = useRef(false);
-  const [password, setPassword] = useState("");
-  const [isEmailFocused, setIsEmailFocused] = useState(false);
-  const [isEmailValid, setIsEmailValid] = useState(true);
-  console.log("email =", email);
-  const onContinuePress = () => {
-    // SooBottomSheet.push({
-    //   title: "Enter your password",
-    //   child: <SignUpEmailBottomSheet />,
-    //   needPadding: true,
-    // });
+  const router = useRouter();
+  const [password, setPassword] = useState<string>("");
+  const [isPasswordFocused, setIsPasswordFocused] = useState<boolean>(false);
+  const [isPasswordValid, setIsPasswordValid] = useState<boolean>(true);
+  const [passwordRules, setPasswordRules] = useState({
+    hasLower: false,
+    hasUpper: false,
+    hasNumber: false,
+    hasSpecial: false,
+    hasLength: false,
+  });
+  const [passwordVisibility, setPasswordVisibility] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const validatePassword = (password: string) => {
+    const rules = {
+      hasLower: /[a-z]/.test(password),
+      hasUpper: /[A-Z]/.test(password),
+      hasNumber: /\d/.test(password),
+      hasSpecial: /[^A-Za-z0-9]/.test(password),
+      hasLength: password.length >= 6,
+    };
+    const isValid = Object.values(rules).every(Boolean);
+    return { isValid, rules };
   };
 
-  const signUpWithEmail = async () => {
-    console.log("signUpWithEmail");
-  };
-
-  const onEmailTextChange = (text: string) => {
+  const onPasswordTextChange = (text: string) => {
     setPassword(text);
-    setIsEmailValid(validateEmail(text));
+    const { isValid, rules } = validatePassword(text);
+    setIsPasswordValid(isValid);
+    setPasswordRules(rules);
   };
 
-  const validateEmail = (email: string) => {
-    if (!email || email.length === 0) return true;
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
+  const togglePasswordVisibility = () => {
+    setPasswordVisibility(!passwordVisibility);
   };
 
-  const onClearEmailText = () => {
-    setPassword("");
+  const onContinuePress = async () => {
+    if (!email || !password) return;
+
+    setLoading(true);
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    });
+
+    if (session) {
+      console.log(email, password);
+      console.log("Session =", session);
+      router.push(Route.HomePage);
+    }
+
+    if (error) Alert.alert(error.message);
+    if (!session)
+      Alert.alert("Please check your inbox for email verification!");
+    setLoading(false);
+  };
+
+  const passwordRuleItem = (passed: boolean, label: string) => {
+    return (
+      <View className="flex flex-row items-center mt-1">
+        <Feather
+          name={passed ? "check-circle" : "x-circle"}
+          size={18}
+          color={passed ? "green" : "red"}
+        />
+        <Text
+          className={`ml-2 text-sm ${
+            passed ? "text-green-500" : "text-red-500"
+          }`}
+        >
+          {label}
+        </Text>
+      </View>
+    );
   };
 
   const inputPaddingY = React.useMemo(
@@ -56,84 +109,93 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
     []
   );
 
-  const isLoginDisabled = password.length === 0 || !isEmailValid;
-  console.log("isLoginDisabled", isLoginDisabled);
+  const isLoginDisabled = password.length === 0 || !isPasswordValid || loading;
 
   return (
-    <View className="flex flex-col mt-2">
-      <View
-        className={`flex flex-row w-full items-center justify-between bg-gray-100 rounded-xl px-4 py-1 gap-x-1 ${inputPaddingY}
-              ${isEmailFocused ? "border border-black" : ""} ${!isEmailValid && !isEmailFocused ? "border border-red-500" : ""}`}
-      >
-        <Fontisto name="email" size={20} color="black" />
-        <BottomSheetTextInput
-          style={{ fontSize: 16 }}
-          className="flex-1"
-          placeholder="Email"
-          placeholderTextColor={"gray"}
-          value={email}
-          onChangeText={onEmailTextChange}
-          keyboardType="email-address"
-          textContentType="emailAddress"
-          textAlignVertical="center"
-          autoCorrect={false}
-          autoCapitalize={"none"}
-          onFocus={() => {
-            setIsEmailFocused(true);
-          }}
-          onBlur={() => {
-            setIsEmailFocused(false);
-            setIsEmailValid(validateEmail(password));
+    <ScrollView
+      className="max-h-80"
+      keyboardShouldPersistTaps={"handled"}
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="flex flex-col mt-2">
+        <View
+          className={`flex flex-row w-full items-center justify-between bg-gray-100 rounded-xl px-4 py-1 gap-x-1 ${inputPaddingY}
+              ${isPasswordFocused ? "border border-black" : ""} ${!isPasswordValid && !isPasswordFocused ? "border border-red-500" : ""}`}
+        >
+          <Feather name="lock" size={20} color="black" />
+          <BottomSheetTextInput
+            secureTextEntry={passwordVisibility}
+            style={{ fontSize: 16 }}
+            className="flex-1"
+            placeholder="Password"
+            placeholderTextColor={"gray"}
+            value={password}
+            onChangeText={onPasswordTextChange}
+            keyboardType="default"
+            textContentType="password"
+            textAlignVertical="center"
+            autoCorrect={false}
+            autoCapitalize={"none"}
+            onFocus={() => setIsPasswordFocused(true)}
+            onBlur={() => setIsPasswordFocused(false)}
+          />
+          <TouchableOpacity onPress={togglePasswordVisibility}>
+            {passwordVisibility ? (
+              <Feather name="eye-off" size={18} color="gray" />
+            ) : (
+              <Feather name="eye" size={18} color="gray" />
+            )}
+          </TouchableOpacity>
+        </View>
+        {(!isPasswordValid || isPasswordFocused) && (
+          <View className="mt-2">
+            {passwordRuleItem(
+              passwordRules.hasLower,
+              "Must include a lowercase letter"
+            )}
+            {passwordRuleItem(
+              passwordRules.hasUpper,
+              "Must include an uppercase letter"
+            )}
+            {passwordRuleItem(passwordRules.hasNumber, "Must include a number")}
+            {passwordRuleItem(
+              passwordRules.hasSpecial,
+              "Must include a symbol"
+            )}
+            {passwordRuleItem(
+              passwordRules.hasLength,
+              "Must be at least 6 characters long"
+            )}
+          </View>
+        )}
+        <View className="h-4" />
+        <EmphasizedText
+          text="By proceeding with this application, you acknowledge that you have read, understood, and agree to be bound by our <em>Terms of Service</em> and <em>Privacy Policy</em>."
+          className="text-gray-700 text-sm leading-relaxed text-justify"
+          emClassName="text-blue-600 font-semibold"
+          onEmphasizedPress={(emText) => {
+            if (emText === "Terms of Service") {
+              console.log("Open Terms of Service");
+            } else if (emText === "Privacy Policy") {
+              console.log("Open Privacy Policy");
+            }
           }}
         />
-        {password.length > 0 && isEmailFocused && (
-          <TouchableOpacity onPressIn={onClearEmailText}>
-            <MaterialIcons name="cancel" size={18} color="gray" />
-          </TouchableOpacity>
-        )}
+        <View className="h-8" />
+        <TouchableOpacity
+          onPress={onContinuePress}
+          disabled={isLoginDisabled}
+          className={`flex rounded-full py-4 w-full items-center justify-center ${
+            isLoginDisabled
+              ? "bg-brandPrimary opacity-50"
+              : "bg-brandPrimary opacity-100"
+          }`}
+        >
+          <Text className="text-black text-lg font-medium">Next</Text>
+        </TouchableOpacity>
+        <View className="h-12" />
       </View>
-      {!isEmailValid && !isEmailFocused && (
-        <Text className="text-red-500 mb-1">
-          Please enter a valid email address.
-        </Text>
-      )}
-      <View className="h-4" />
-      <Text className="text-red-500 mb-1">Email: {email}</Text>
-      <View className="h-4" />
-      <EmphasizedText
-        text="By proceeding with this application, you acknowledge that you have read, understood, and agree to be bound by our <em>Terms of Service</em> and <em>Privacy Policy</em>."
-        className="text-gray-700 text-sm leading-relaxed text-justify"
-        emClassName="text-blue-600 font-semibold"
-        onEmphasizedPress={(emText) => {
-          if (emText === "Terms of Service") {
-            console.log("Open Terms of Service");
-          } else if (emText === "Privacy Policy") {
-            console.log("Open Privacy Policy");
-          }
-        }}
-      />
-      <View className="h-8" />
-      <TouchableOpacity
-        onPress={onContinuePress}
-        disabled={isLoginDisabled}
-        className={`flex rounded-full py-4 w-full items-center justify-center ${
-          isLoginDisabled
-            ? // ? "bg-orange-400 opacity-50"
-              // : "bg-orange-400 opacity-100"
-              "bg-brandPrimary opacity-50"
-            : "bg-brandPrimary opacity-100"
-        }`}
-      >
-        <Text className="text-black text-lg font-medium">Next</Text>
-      </TouchableOpacity>
-      <View
-        className="h-12"
-        // style={{
-        //   height: isEmailFocused ? screenHeight * 0.4 : screenHeight * 0.4,
-        // }}
-        // className={`transition-all duration-500`}
-      />
-    </View>
+    </ScrollView>
   );
 };
 
