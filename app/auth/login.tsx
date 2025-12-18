@@ -47,31 +47,24 @@ const Login: React.FC = () => {
     console.log("signInWithGoogle");
   };
 
-  async function signInWithEmail() {
-    console.log("signInWithEmail", email, password);
-    // setLoading(true);
-    // const { error } = await supabase.auth.signInWithPassword({
-    //   email: email,
-    //   password: password,
-    // });
-
-    // if (error) Alert.alert(error.message);
-    // setLoading(false);
-  }
-
-  async function signUpWithEmail() {
+  async function logInWithEmail() {
+    console.log("Attempting login with:", email);
     setLoading(true);
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.signUp({
+
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
     });
 
-    if (error) Alert.alert(error.message);
-    if (!session)
-      Alert.alert("Please check your inbox for email verification!");
+    if (error) {
+      console.error("Login Error:", error);
+      Alert.alert("Login Failed", error.message);
+    } else {
+      console.log("Login Successful!");
+      console.log("User ID:", data.user?.id);
+      console.log("Session:", data.session);
+      router.replace(Route.HomePage);
+    }
     setLoading(false);
   }
 
@@ -185,7 +178,7 @@ const Login: React.FC = () => {
         </View>
         <View className="h-8" />
         <TouchableOpacity
-          onPress={signInWithEmail}
+          onPress={logInWithEmail}
           disabled={isLoginDisabled}
           className={`flex rounded-full py-4 w-full items-center justify-center ${
             isLoginDisabled

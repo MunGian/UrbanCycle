@@ -1,6 +1,6 @@
 import { SooBottomSheetProvider } from "@/components/SooBottomSheetProvider";
 import { ToastProvider } from "@/components/ToastProvider";
-import { useBottomSheetBackHandler } from "@/hooks/useSooBottomSheetBackHandler";
+import { useBottomSheetBackHandler } from "@/lib/hooks/useSooBottomSheetBackHandler";
 import { Stack } from "expo-router";
 import { StatusBar } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";

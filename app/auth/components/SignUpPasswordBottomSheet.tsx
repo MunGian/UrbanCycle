@@ -1,12 +1,11 @@
 import EmphasizedText from "@/components/EmphasizedText";
-import { Route } from "@/lib/utils/routes";
+import { SooBottomSheet } from "@/components/SooBottomSheetController";
 import { supabase } from "@/lib/utils/supabase";
 import { Feather } from "@expo/vector-icons";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
   Dimensions,
   Platform,
   Text,
@@ -64,6 +63,14 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
   const onContinuePress = async () => {
     if (!email || !password) return;
 
+    // // This handles both:
+    // // 1. Development (Expo Go): exp://...
+    // // 2. Production (Build): urbancycle://...
+    // const redirectUrl = Linking.createURL("/auth/callback", {
+    //   scheme: "urbancycle",
+    // });
+    // console.log("Redirect URL:", redirectUrl);
+
     setLoading(true);
     const {
       data: { session },
@@ -71,17 +78,47 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
     } = await supabase.auth.signUp({
       email: email,
       password: password,
+      // options: {
+      //   emailRedirectTo: redirectUrl,
+      // },
     });
 
-    if (session) {
-      console.log(email, password);
-      console.log("Session =", session);
-      router.push(Route.HomePage);
-    }
+    SooBottomSheet.popAll();
+    router.back();
 
-    if (error) Alert.alert(error.message);
-    if (!session)
-      Alert.alert("Please check your inbox for email verification!");
+    // if (session) {
+    //   // This block handles cases where email confirmation is OFF.
+    //   // If confirmation is ON, session will be null here.
+    //   console.log(
+    //     "Session created immediately (Email confirmation likely OFF)"
+    //   );
+    //   router.push(Route.HomePage);
+    //   return;
+    // }
+
+    // if (error) {
+    //   console.error("Sign up error:", error);
+    //   Alert.alert("Sign Up Failed", error.message);
+    //   setLoading(false);
+    //   return;
+    // }
+
+    // // Email confirmation is ON, and sign-up was successful.
+    // // Show alert and navigate to Login page to wait for verification.
+    // Alert.alert(
+    //   "Verification Email Sent",
+    //   "Please check your inbox to verify your account. Then log in.",
+    //   [
+    //     {
+    //       text: "OK",
+    //       onPress: () => {
+    //         // Close the bottom sheet and navigate to login
+    //         SooBottomSheet.popAll();
+    //         router.back();
+    //       },
+    //     },
+    //   ]
+    // );
     setLoading(false);
   };
 
@@ -113,7 +150,7 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
 
   return (
     <ScrollView
-      className=""
+      className="max-h-96"
       keyboardShouldPersistTaps={"handled"}
       showsVerticalScrollIndicator={false}
     >
@@ -191,7 +228,9 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
               : "bg-brandPrimary opacity-100"
           }`}
         >
-          <Text className="text-black text-lg font-medium">Next</Text>
+          <Text className="text-black text-lg font-medium">
+            {loading ? "Loading..." : "Next"}
+          </Text>
         </TouchableOpacity>
         <View className="h-12" />
       </View>

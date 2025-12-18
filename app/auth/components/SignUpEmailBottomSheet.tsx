@@ -3,16 +3,8 @@ import { SooBottomSheet } from "@/components/SooBottomSheetProvider";
 import { Fontisto, MaterialIcons } from "@expo/vector-icons";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import React, { useState } from "react";
-import {
-  Dimensions,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
 import SignUpPasswordBottomSheet from "./SignUpPasswordBottomSheet";
-
-const { height: screenHeight } = Dimensions.get("window");
 
 const SignUpEmailBottomSheet: React.FC = () => {
   const [email, setEmail] = useState<string>("");

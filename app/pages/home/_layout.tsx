@@ -1,4 +1,4 @@
-import { MarketplaceItem } from "@/api/apiModel";
+import { MarketplaceItem } from "@/lib/api/apiModel";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";

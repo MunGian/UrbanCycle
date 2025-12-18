@@ -22,6 +22,7 @@ const Auth: React.FC = () => {
       <Stack.Screen name="login" />
       <Stack.Screen name="signup" />
       <Stack.Screen name="resetPassword" />
+      <Stack.Screen name="callback" />
     </Stack>
   );
 };

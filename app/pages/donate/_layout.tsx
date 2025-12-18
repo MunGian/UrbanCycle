@@ -1,4 +1,4 @@
-import { ListedItem } from "@/api/apiModel";
+import { ListedItem } from "@/lib/api/apiModel";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {

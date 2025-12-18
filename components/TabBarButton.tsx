@@ -1,4 +1,4 @@
-import { icon } from "@/constants/navicon";
+import { icon } from "@/lib/constants/navicon";
 import { PlatformPressable } from "@react-navigation/elements";
 import React, { useEffect } from "react";
 import { StyleSheet } from "react-native";

@@ -1,5 +1,5 @@
-import { MarketplaceItem } from "@/api/apiModel";
 import EmphasizedText from "@/components/EmphasizedText";
+import { MarketplaceItem } from "@/lib/api/apiModel";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useState } from "react";

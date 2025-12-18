@@ -1,4 +1,4 @@
-import { MarketplaceItem } from "@/api/apiModel";
+import { MarketplaceItem } from "@/lib/api/apiModel";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import React, { FC, useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
