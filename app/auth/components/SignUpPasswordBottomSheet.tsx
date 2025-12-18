@@ -113,7 +113,7 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
 
   return (
     <ScrollView
-      className="max-h-80"
+      className=""
       keyboardShouldPersistTaps={"handled"}
       showsVerticalScrollIndicator={false}
     >

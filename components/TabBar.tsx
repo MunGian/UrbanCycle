@@ -38,9 +38,9 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             position: "absolute",
             backgroundColor: "#353839",
             borderRadius: 30,
-            marginHorizontal: 12,
+            marginHorizontal: 8,
             height: dimensions.height - 15,
-            width: buttonWidth - 25,
+            width: buttonWidth - 16,
           },
           animatedStyle,
         ]}
@@ -81,9 +81,11 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             onPress={onPress}
             onLongPress={onLongPress}
             isFocused={isFocused}
-            routeName={route.name as "home" | "message" | "report" | "profile"}
+            routeName={
+              route.name as "home" | "message" | "donate" | "report" | "profile"
+            }
             color={isFocused ? "#414a4c" : "#222"}
-            label={typeof label === "string" ? label : route.name}
+            label={typeof label === "string" ? label : "route.name"}
           />
         );
       })}

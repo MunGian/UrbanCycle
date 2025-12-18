@@ -13,7 +13,6 @@ import {
 import AppLogo from "@/assets/images/inAppIconUse.png";
 import EmphasizedText from "@/components/EmphasizedText";
 import { SooBottomSheet } from "@/components/SooBottomSheetProvider";
-import { useBottomSheetBackHandler } from "@/hooks/useSooBottomSheetBackHandler";
 import SignUpEmailBottomSheet from "./components/SignUpEmailBottomSheet";
 
 // Tells Supabase Auth to continuously refresh the session automatically if
@@ -34,7 +33,7 @@ console.log("Sign Upppppppppppppppppppppppp");
 const Signup: React.FC = () => {
   // Add this hook to any file using SooBottomSheet
   // Handles bottom sheet back automatically
-  useBottomSheetBackHandler();
+  // useBottomSheetBackHandler();
 
   const router = useRouter();
 

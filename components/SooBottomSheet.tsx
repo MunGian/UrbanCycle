@@ -8,12 +8,11 @@ import React, { useCallback, useEffect, useRef } from "react";
 import {
   Dimensions,
   Keyboard,
-  KeyboardAvoidingView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SooBottomSheet as BottomSheetController } from "./SooBottomSheetProvider";
+import { SooBottomSheet as BottomSheetController } from "./SooBottomSheetController";
 
 const { height: screenHeight } = Dimensions.get("window");
 
@@ -94,40 +93,29 @@ const SooBottomSheet: React.FC<SooBottomSheetProps> = ({
         borderRadius: 4,
       }}
     >
-      <BottomSheetView style={{ flex: 1 }}>
-        <KeyboardAvoidingView
-          keyboardVerticalOffset={80}
-          behavior={"height"}
-          style={{ flex: 1 }}
-        >
-          <TouchableWithoutFeedback
-            onPress={Keyboard.dismiss}
-            accessible={false}
-          >
-            <View style={{ paddingHorizontal: needPadding ? 16 : 0, flex: 1 }}>
-              <View
-                style={{
-                  paddingHorizontal: needPadding ? 0 : 16,
-                  paddingTop: 6,
-                  paddingBottom: 14,
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Text
-                  style={{ fontSize: 20, fontWeight: "600", color: "#333" }}
-                >
-                  {title}
-                </Text>
-                <TouchableOpacity onPress={closeSheet}>
-                  <Ionicons name="close" size={32} color="gray" />
-                </TouchableOpacity>
-              </View>
-              {child}
+      <BottomSheetView>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ paddingHorizontal: needPadding ? 16 : 0 }}>
+            <View
+              style={{
+                paddingHorizontal: needPadding ? 0 : 16,
+                paddingTop: 6,
+                paddingBottom: 14,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ fontSize: 20, fontWeight: "600", color: "#333" }}>
+                {title}
+              </Text>
+              <TouchableOpacity onPress={closeSheet}>
+                <Ionicons name="close" size={32} color="gray" />
+              </TouchableOpacity>
             </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+            {child}
+          </View>
+        </TouchableWithoutFeedback>
       </BottomSheetView>
     </BottomSheet>
   );

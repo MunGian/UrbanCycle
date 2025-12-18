@@ -1,10 +1,11 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import MessagePage from "../pages/message/_layout";
 
 const Message: React.FC = () => {
   return (
-    <View className="flex-1 bg-green-300 justify-center items-center">
-      <Text>Message Page</Text>
+    <View className="flex-1 bg-white">
+      <MessagePage />
     </View>
   );
 };

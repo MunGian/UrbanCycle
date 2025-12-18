@@ -1,22 +1,26 @@
 import { SooBottomSheet } from "@/components/SooBottomSheetProvider";
-import { useNavigation } from "@react-navigation/native";
-import { useEffect } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+import { BackHandler } from "react-native";
 
 export const useBottomSheetBackHandler = () => {
-  const navigation = useNavigation();
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        const stackCount = SooBottomSheet.getStackCount?.() ?? 0;
+        if (stackCount > 0) {
+          SooBottomSheet.pop();
+          return true; // Prevent default behavior (exit app/go back)
+        }
+        return false; // Let default behavior happen
+      };
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("beforeRemove", (e) => {
-      const stackCount = SooBottomSheet.getStackCount?.() ?? 0;
-      console.log("BottomSheet StackCount =", stackCount);
-      // Ensure the bottom sheet will close first instead of the background stack
-      // when user using swipe-from-edge or related gesture (like goBack())
-      if (stackCount > 0) {
-        e.preventDefault(); // stop screen pop when bottom sheet stack still exists (more than 0)
-        SooBottomSheet.pop(); // close top sheet
-      }
-    });
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
 
-    return unsubscribe;
-  }, [navigation]);
+      return () => subscription.remove();
+    }, [])
+  );
 };

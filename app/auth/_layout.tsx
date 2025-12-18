@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import React from "react";
 
 // Tells Supabase Auth to continuously refresh the session automatically if
@@ -17,8 +17,6 @@ import React from "react";
 // console.log("supabase", supabase.auth);
 
 const Auth: React.FC = () => {
-  const router = useRouter();
-
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="login" />

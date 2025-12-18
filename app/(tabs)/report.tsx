@@ -1,12 +1,8 @@
 import React from "react";
-import { Text, View } from "react-native";
+import ReportPage from "../pages/report/_layout";
 
 const Report: React.FC = () => {
-  return (
-    <View className="flex-1 bg-yellow-300 justify-center items-center">
-      <Text>Report Page</Text>
-    </View>
-  );
+  return <ReportPage />;
 };
 
 export default Report;

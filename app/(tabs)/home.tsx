@@ -1,10 +1,11 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import HomePage from "../pages/home/_layout";
 
 const Home: React.FC = () => {
   return (
     <View className="flex-1 bg-red-200 justify-center items-center">
-      <Text>Home Page</Text>
+      <HomePage />
     </View>
   );
 };

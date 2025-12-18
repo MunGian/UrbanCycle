@@ -1,5 +1,6 @@
 import { SooBottomSheetProvider } from "@/components/SooBottomSheetProvider";
 import { ToastProvider } from "@/components/ToastProvider";
+import { useBottomSheetBackHandler } from "@/hooks/useSooBottomSheetBackHandler";
 import { Stack } from "expo-router";
 import { StatusBar } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -13,6 +14,9 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   // useHideNavigationBar();
+  // Add this hook to any file using SooBottomSheet
+  // Handles bottom sheet back automatically
+  useBottomSheetBackHandler();
 
   return (
     <SafeAreaProvider>
@@ -31,10 +35,10 @@ export default function RootLayout() {
               >
                 <Stack.Screen name="auth" />
                 <Stack.Screen name="(tabs)" />
-                {/* <Stack.Screen
-            name="modal"
-            options={{ presentation: "modal", title: "Modal" }}
-          /> */}
+                <Stack.Screen name="pages/itemDetails" />
+                <Stack.Screen name="pages/message" />
+                <Stack.Screen name="pages/chatRoom" />
+                <Stack.Screen name="pages/cart" />
               </Stack>
             </ToastProvider>
           </SooBottomSheetProvider>
