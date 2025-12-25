@@ -20,16 +20,20 @@ interface SooBottomSheetProps {
   sheetId: number;
   title?: string;
   child: React.ReactNode;
-  needPadding?: boolean;
   isClosing?: boolean;
+  needPadding?: boolean;
+  needCloseButton?: boolean;
+  isDismissible?: boolean;
 }
 
 const SooBottomSheet: React.FC<SooBottomSheetProps> = ({
   sheetId,
   title,
   child,
-  needPadding = false,
   isClosing = false,
+  needPadding = false,
+  needCloseButton = true,
+  isDismissible = true,
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -57,6 +61,7 @@ const SooBottomSheet: React.FC<SooBottomSheetProps> = ({
         {...props}
         appearsOnIndex={0}
         disappearsOnIndex={-1}
+        pressBehavior={isDismissible ? "close" : "none"}
         onPress={closeSheet}
       />
     ),
@@ -68,7 +73,7 @@ const SooBottomSheet: React.FC<SooBottomSheetProps> = ({
       ref={bottomSheetRef}
       index={0}
       enableDynamicSizing={true}
-      enablePanDownToClose={true}
+      enablePanDownToClose={isDismissible}
       enableHandlePanningGesture={true}
       enableContentPanningGesture={true}
       enableOverDrag={false}
@@ -109,9 +114,11 @@ const SooBottomSheet: React.FC<SooBottomSheetProps> = ({
               <Text style={{ fontSize: 20, fontWeight: "600", color: "#333" }}>
                 {title}
               </Text>
-              <TouchableOpacity onPress={closeSheet}>
-                <Ionicons name="close" size={32} color="gray" />
-              </TouchableOpacity>
+              {needCloseButton && (
+                <TouchableOpacity onPress={closeSheet}>
+                  <Ionicons name="close" size={32} color="gray" />
+                </TouchableOpacity>
+              )}
             </View>
             {child}
           </View>

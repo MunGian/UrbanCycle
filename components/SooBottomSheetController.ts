@@ -4,6 +4,8 @@ export type OpenSheetParams = {
   title?: string;
   child: React.ReactNode;
   needPadding?: boolean;
+  needCloseButton?: boolean;  
+  isDismissible?: boolean;
 };
 
 export type SheetItem = OpenSheetParams & {

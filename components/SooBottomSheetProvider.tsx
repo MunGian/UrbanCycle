@@ -34,11 +34,13 @@ export const SooBottomSheetProvider = ({
       {sheetStack.map((sheet) => (
         <SooBottomSheetProps
           key={sheet.id}
+          sheetId={sheet.id}
           title={sheet.title}
           child={sheet.child}
           needPadding={sheet.needPadding}
-          sheetId={sheet.id}
           isClosing={sheet.isClosing}
+          needCloseButton={sheet.needCloseButton}
+          isDismissible={sheet.isDismissible}
         />
       ))}
     </>

@@ -14,6 +14,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     SooBottomSheet.push({
       title: "Enter your details",
       needPadding: true,
+      needCloseButton: false,
+      isDismissible: false,
       child: <FillUpDetailsBottomSheet />,
     });
   };
