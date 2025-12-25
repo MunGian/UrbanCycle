@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const ReportPage: React.FC = () => {
   const user = useUserStore((s) => s.user);
@@ -69,7 +68,7 @@ const ReportPage: React.FC = () => {
   };
 
   return (
-    <SafeAreaView className="flex h-full w-full bg-white">
+    <View className="flex h-full w-full bg-white">
       {/* Header */}
       <View className="px-6 pt-6 pb-4 bg-white">
         <Text className="text-2xl font-bold text-black">Waste Reporting</Text>
@@ -256,7 +255,7 @@ const ReportPage: React.FC = () => {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

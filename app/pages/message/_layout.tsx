@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 // Chat room type
 interface ChatRoom {
@@ -106,7 +105,7 @@ const MessagePage: React.FC = () => {
   }
 
   return (
-    <SafeAreaView className="flex h-full w-full bg-white">
+    <View className="flex h-full w-full bg-white">
       {/* Header */}
       <View className="px-4 pt-4 pb-2 border-b border-gray-100">
         <View className="flex-row items-center justify-between mb-3">
@@ -225,7 +224,7 @@ const MessagePage: React.FC = () => {
       >
         <MaterialIcons name="chat" size={24} color="white" />
       </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 };
 

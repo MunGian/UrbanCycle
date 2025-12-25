@@ -63,3 +63,44 @@ export const upsertAvatar = async (userId: string, avatarUri: string) => {
 
   return data.publicUrl;
 };
+
+/* -------------------- Upload item image -------------------- */
+export const uploadItemImage = async (userId: string, imageUri: string) => {
+  const response = await fetch(imageUri);
+  const arrayBuffer = await response.arrayBuffer();
+  const fileName = `${userId}_${Date.now()}.jpg`;
+  const filePath = `${fileName}`;
+
+  const { error } = await supabase.storage
+    .from("item-images")
+    .upload(filePath, arrayBuffer, {
+      upsert: true,
+      contentType: "image/jpeg",
+    });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("item-images").getPublicUrl(filePath);
+
+  return data.publicUrl;
+};
+
+export const insertItem = async (item: any) => {
+  const { error } = await supabase.from("item").insert(item);
+  if (error) throw error;
+};
+
+export const fetchUserItems = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("item")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Fetch user items error:", error);
+    return [];
+  }
+
+  return data;
+};

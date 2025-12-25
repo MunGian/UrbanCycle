@@ -5,7 +5,8 @@ export type Category =
   | "Furniture"
   | "Books"
   | "Home & Garden"
-  | "Sports";
+  | "Sports" 
+  |  "Others";
 
 export interface User {
   id: string;
@@ -46,11 +47,15 @@ export interface ListedItem {
   id: string;
   title: string;
   category: string;
-  condition: string;
-  status: "Active" | "Pending" | "Donated";
+  location: string;
+  description: string;
+  is_free?: boolean;
+  price?: number;
+  status: string;
   date: string;
-  image?: string;
-  views: number;
+  images: string[] | string;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 export interface Message {

@@ -167,7 +167,7 @@ const dummyMarketplaceData: MarketplaceItem[] = [
   },
 ];
 
-const category = [
+export const category = [
   "All",
   "Clothing",
   "Electronics",
@@ -175,6 +175,7 @@ const category = [
   "Books",
   "Home & Garden",
   "Sports",
+  "Others",
 ];
 
 const columnCount = 2;
@@ -193,14 +194,14 @@ const HomePage: React.FC = () => {
 
   const setSelectedCategoryCallback = (cat: string) => {
     setSelectedCategory(cat);
-    SooBottomSheet.pop();
+    // SooBottomSheet.pop();
   };
 
   const onCategoryClicked = () => {
     Keyboard.dismiss();
     SooBottomSheet.push({
       title: "Categories",
-      needPadding: true,
+      needPadding: false,
       child: (
         <CategoryBottomSheet
           category={category}

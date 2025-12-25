@@ -7,7 +7,6 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
@@ -46,7 +45,7 @@ const ProfilePage: React.FC = () => {
   ];
 
   return (
-    <SafeAreaView className="flex h-full w-full bg-white">
+    <View className="flex h-full w-full bg-white">
       <ScrollView className="mb-24" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="px-6 pt-6 pb-4">
@@ -166,7 +165,7 @@ const ProfilePage: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
