@@ -7,6 +7,16 @@ export type Category =
   | "Home & Garden"
   | "Sports";
 
+export interface User {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  avatar_url?: string;
+  location?: string;
+  bio?: string;
+}
+
 export interface MarketplaceItem {
   id: string;
   name: string;

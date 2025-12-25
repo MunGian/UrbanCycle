@@ -6,4 +6,5 @@ export const Route = {
   MessagePage: "/(tabs)/messages",
   ProfilePage: "/(tabs)/profile",
   ReportPage: "/(tabs)/report",
+  CartPage: "/pages/cart" as const,
 } as const satisfies Record<string, `/${string}`>;

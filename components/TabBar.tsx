@@ -82,7 +82,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             onLongPress={onLongPress}
             isFocused={isFocused}
             routeName={
-              route.name as "home" | "message" | "donate" | "report" | "profile"
+              route.name as "home" | "message" | "post" | "report" | "profile"
             }
             color={isFocused ? "#414a4c" : "#222"}
             label={typeof label === "string" ? label : "route.name"}

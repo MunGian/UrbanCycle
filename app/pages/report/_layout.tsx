@@ -1,4 +1,6 @@
+import { AuthPlaceholder } from "@/components/AuthPlaceholder";
 import { Report } from "@/lib/api/apiModel";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -11,6 +13,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ReportPage: React.FC = () => {
+  const user = useUserStore((s) => s.user);
+
   const [activeTab, setActiveTab] = useState<"submit" | "history">("submit");
 
   // Form State
@@ -187,6 +191,10 @@ const ReportPage: React.FC = () => {
                 Submit Report
               </Text>
             </TouchableOpacity>
+          </View>
+        ) : !user ? (
+          <View className="mt-20 justify-center items-center">
+            <AuthPlaceholder />
           </View>
         ) : (
           <View className="px-6 pb-10">

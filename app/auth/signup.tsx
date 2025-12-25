@@ -29,7 +29,6 @@ import SignUpEmailBottomSheet from "./components/SignUpEmailBottomSheet";
 // });
 
 // console.log("supabase", supabase.auth);
-console.log("Sign Upppppppppppppppppppppppp");
 const Signup: React.FC = () => {
   // Add this hook to any file using SooBottomSheet
   // Handles bottom sheet back automatically

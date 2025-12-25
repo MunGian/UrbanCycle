@@ -1,5 +1,6 @@
 import EmphasizedText from "@/components/EmphasizedText";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
+import { Route } from "@/lib/utils/routes";
 import { supabase } from "@/lib/utils/supabase";
 import { Feather } from "@expo/vector-icons";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
@@ -73,7 +74,7 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
 
     setLoading(true);
     const {
-      data: { session },
+      data: { user, session },
       error,
     } = await supabase.auth.signUp({
       email: email,
@@ -83,8 +84,20 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
       // },
     });
 
+    // Insert into User Table in DB
+    if (user) {
+      const { data: profile } = await supabase
+        .from("user")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      console.log("Profile exists:", profile);
+    }
+
+    console.log("Sign up response:", { user, session, error });
     SooBottomSheet.popAll();
-    router.back();
+    router.replace(Route.HomePage);
 
     // if (session) {
     //   // This block handles cases where email confirmation is OFF.

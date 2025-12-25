@@ -1,6 +1,9 @@
 import { MarketplaceItem } from "@/lib/api/apiModel";
+import { Route } from "@/lib/utils/routes";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Dimensions,
@@ -182,6 +185,9 @@ const cardWidth = Math.max(
 
 const HomePage: React.FC = () => {
   const navigation = useNavigation();
+  const router = useRouter();
+  const user = useUserStore((s) => s.user);
+
   const [query, setQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
@@ -207,7 +213,12 @@ const HomePage: React.FC = () => {
 
   const navigateToCartPage = () => {
     Keyboard.dismiss();
-    (navigation as any).navigate("pages/cart");
+    if (user) {
+      console.log("user =", user);
+      router.push(Route.CartPage);
+    } else {
+      router.push(Route.LoginPage);
+    }
   };
 
   const navigateToItemDetailsPage = (item: MarketplaceItem) => {
@@ -285,16 +296,22 @@ const HomePage: React.FC = () => {
         <View className="px-4 pt-4 pb-2">
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-1">
-              <Text className="text-md text-gray-600 mb-1">Welcome back,</Text>
-              <Text className="text-3xl font-bold text-black">Mun Gian</Text>
+              <Text className="text-md text-gray-600 mb-1">
+                {user ? "Welcome back," : "Welcome to UrbanCycle,"}
+              </Text>
+
+              <Text className="text-3xl font-bold text-black">
+                {user
+                  ? user?.first_name
+                    ? user.first_name + " " + user.last_name
+                    : "Friend"
+                  : "Guest"}
+              </Text>
             </View>
             <TouchableOpacity onPress={navigateToCartPage} className="p-2">
               <MaterialIcons name="shopping-cart" size={28} color="black" />
             </TouchableOpacity>
           </View>
-          {/* <Text className="text-gray-600 text-sm mb-3">
-          Buy, sell and reuse — support a circular economy
-        </Text> */}
 
           <View className="flex-row items-center gap-2">
             <TextInput

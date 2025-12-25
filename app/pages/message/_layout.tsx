@@ -1,3 +1,5 @@
+import { AuthPlaceholder } from "@/components/AuthPlaceholder";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
@@ -79,6 +81,7 @@ const dummyChatRooms: ChatRoom[] = [
 ];
 
 const MessagePage: React.FC = () => {
+  const user = useUserStore((s) => s.user);
   const navigation = useNavigation<any>();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -97,6 +100,10 @@ const MessagePage: React.FC = () => {
       isOnline: chat.isOnline ? "true" : "false",
     });
   };
+
+  if (!user) {
+    return <AuthPlaceholder />;
+  }
 
   return (
     <SafeAreaView className="flex h-full w-full bg-white">

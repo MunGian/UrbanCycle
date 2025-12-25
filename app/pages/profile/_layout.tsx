@@ -1,5 +1,9 @@
+import { AuthPlaceholder } from "@/components/AuthPlaceholder";
 import { Route } from "@/lib/utils/routes";
+import { supabase } from "@/lib/utils/supabase";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -7,18 +11,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
+  const user = useUserStore((s) => s.user);
 
-  // Dummy user data
-  const user = {
-    name: "Mun Gian",
-    email: "mungian@gmail.com",
-    avatar:
-      "https://drive.google.com/uc?export=view&id=1yDStBJIMAU_0rCH2rwEbWVRKqmhmxotm",
-    rating: 4.8,
-    reviews: 124,
-    itemsListed: 12,
-    itemsSold: 45,
-  };
+  if (!user) {
+    return <AuthPlaceholder />;
+  }
 
   const menuItems = [
     {
@@ -59,21 +56,41 @@ const ProfilePage: React.FC = () => {
         {/* User Profile Card */}
         <View className="px-6 mb-6">
           <View className="flex-row items-center">
-            <Image
-              source={{ uri: user.avatar }}
-              className="w-20 h-20 rounded-full bg-gray-200"
-            />
+            {user.avatar_url ? (
+              <Image
+                source={{ uri: user.avatar_url }}
+                className="w-20 h-20 rounded-full bg-gray-200"
+              />
+            ) : (
+              <MaterialCommunityIcons
+                name="face-man-profile"
+                size={80}
+                color="black"
+              />
+            )}
             <View className="ml-4 flex-1">
-              <Text className="text-xl font-bold text-black">{user.name}</Text>
+              <Text className="text-xl font-bold text-black">
+                {user
+                  ? user.first_name + " " + user.last_name || "Friend"
+                  : "Guest"}
+              </Text>
               <Text className="text-gray-500 text-sm">{user.email}</Text>
               <View className="flex-row items-center mt-1">
                 <MaterialIcons name="star" size={16} color="#FBBF24" />
-                <Text className="text-black font-semibold ml-1">
-                  {user.rating}
-                </Text>
-                <Text className="text-gray-400 text-xs ml-1">
-                  ({user.reviews} reviews)
-                </Text>
+                {user.rating ? (
+                  <>
+                    <Text className="text-black font-semibold ml-1">
+                      {user.rating}
+                    </Text>
+                    <Text className="text-gray-400 text-xs ml-1">
+                      ({user.reviews} reviews)
+                    </Text>
+                  </>
+                ) : (
+                  <Text className="text-gray-400 text-xs ml-1">
+                    No reviews yet
+                  </Text>
+                )}
               </View>
             </View>
             <TouchableOpacity className="p-2">
@@ -86,7 +103,7 @@ const ProfilePage: React.FC = () => {
         <View className="flex-row px-6 mb-8">
           <View className="flex-1 bg-gray-50 p-4 rounded-2xl mr-2 items-center">
             <Text className="text-2xl font-bold text-black">
-              {user.itemsListed}
+              {user.itemsListed ?? 12}
             </Text>
             <Text className="text-gray-500 text-xs uppercase tracking-wider mt-1">
               Active Listings
@@ -94,7 +111,7 @@ const ProfilePage: React.FC = () => {
           </View>
           <View className="flex-1 bg-gray-50 p-4 rounded-2xl ml-2 items-center">
             <Text className="text-2xl font-bold text-black">
-              {user.itemsSold}
+              {user.itemsSold ?? 26}
             </Text>
             <Text className="text-gray-500 text-xs uppercase tracking-wider mt-1">
               Items Donated
@@ -136,7 +153,10 @@ const ProfilePage: React.FC = () => {
         <View className="px-6 mt-8 mb-10">
           <TouchableOpacity
             className="flex-row items-center justify-center bg-red-50 py-4 rounded-full"
-            onPress={() => router.replace("/auth/login")}
+            onPress={async () => {
+              await supabase.auth.signOut();
+              router.replace(Route.HomePage);
+            }}
           >
             <MaterialIcons name="logout" size={20} color="#EF4444" />
             <Text className="text-red-500 font-bold ml-2">Log Out</Text>

@@ -1,4 +1,6 @@
+import { AuthPlaceholder } from "@/components/AuthPlaceholder";
 import { ListedItem } from "@/lib/api/apiModel";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -12,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const DonatePage: React.FC = () => {
+  const user = useUserStore((s) => s.user);
   const [activeTab, setActiveTab] = useState<"list" | "manage">("manage");
 
   // Form State
@@ -102,6 +105,10 @@ const DonatePage: React.FC = () => {
         return "bg-gray-100 text-gray-700";
     }
   };
+
+  if (!user) {
+    return <AuthPlaceholder />;
+  }
 
   return (
     <SafeAreaView className="flex h-full w-full bg-white">

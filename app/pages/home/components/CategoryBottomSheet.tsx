@@ -12,10 +12,6 @@ const CategoryBottomSheet: React.FC<CategoryBottomSheetProps> = ({
   selectedCategory,
   setSelectedCategoryCallback,
 }) => {
-  const onSelected = (cat: string) => {
-    setSelectedCategoryCallback(cat);
-  };
-
   return (
     <View className="flex-row flex-wrap gap-3 pb-12">
       {category.map((cat) => {

@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/components/AuthProvider";
 import { SooBottomSheetProvider } from "@/components/SooBottomSheetProvider";
 import { ToastProvider } from "@/components/ToastProvider";
 import { useBottomSheetBackHandler } from "@/lib/hooks/useSooBottomSheetBackHandler";
@@ -22,26 +23,28 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <GestureHandlerRootView className="flex-1">
         <SafeAreaView className="flex-1 bg-body">
-          <SooBottomSheetProvider>
-            <ToastProvider>
-              <StatusBar
-                barStyle="dark-content"
-                backgroundColor={"#fff"}
-                animated={true}
-              />
-              <Stack
-                initialRouteName="(tabs)"
-                screenOptions={{ headerShown: false }}
-              >
-                <Stack.Screen name="auth" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="pages/itemDetails" />
-                <Stack.Screen name="pages/message" />
-                <Stack.Screen name="pages/chatRoom" />
-                <Stack.Screen name="pages/cart" />
-              </Stack>
-            </ToastProvider>
-          </SooBottomSheetProvider>
+          <AuthProvider>
+            <SooBottomSheetProvider>
+              <ToastProvider>
+                <StatusBar
+                  barStyle="dark-content"
+                  backgroundColor={"#fff"}
+                  animated={true}
+                />
+                <Stack
+                  initialRouteName="(tabs)"
+                  screenOptions={{ headerShown: false }}
+                >
+                  <Stack.Screen name="auth" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="pages/itemDetails" />
+                  <Stack.Screen name="pages/message" />
+                  <Stack.Screen name="pages/chatRoom" />
+                  <Stack.Screen name="pages/cart" />
+                </Stack>
+              </ToastProvider>
+            </SooBottomSheetProvider>
+          </AuthProvider>
         </SafeAreaView>
       </GestureHandlerRootView>
     </SafeAreaProvider>

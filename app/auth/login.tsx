@@ -1,5 +1,7 @@
+import { fetchUserProfile } from "@/lib/api/api";
 import { Route } from "@/lib/utils/routes";
 import { supabase } from "@/lib/utils/supabase";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 import Feather from "@expo/vector-icons/Feather";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -47,26 +49,48 @@ const Login: React.FC = () => {
     console.log("signInWithGoogle");
   };
 
-  async function logInWithEmail() {
+  const logInWithEmail = async () => {
+    if (!email || !password) {
+      Alert.alert("Missing Info", "Please enter both email and password.");
+      return;
+    }
+
     console.log("Attempting login with:", email);
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      console.error("Login Error:", error);
-      Alert.alert("Login Failed", error.message);
-    } else {
-      console.log("Login Successful!");
-      console.log("User ID:", data.user?.id);
-      console.log("Session:", data.session);
-      router.replace(Route.HomePage);
+      if (error) {
+        console.error("Login Error:", error);
+        Alert.alert("Login Failed", error.message);
+        return;
+      }
+
+      if (data.user) {
+        console.log("Login Successful!");
+        console.log("User ID:", data.user.id);
+        console.log("Session:", data.session);
+
+        // Fetch user profile and update Zustand store
+        const profile = await fetchUserProfile(data.user.id);
+        if (profile) {
+          useUserStore.getState().setUser(profile);
+        }
+
+        // Redirect to Home page (replace to avoid back button returning to login)
+        router.replace(Route.HomePage);
+      }
+    } catch (err) {
+      console.error("Unexpected login error:", err);
+      Alert.alert("Login Failed", "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }
+  };
 
   const onEmailTextChange = (text: string) => {
     setEmail(text);
@@ -74,7 +98,6 @@ const Login: React.FC = () => {
   };
 
   const onPasswordTextChange = (text: string) => {
-    console.log("password text change:", text);
     setPassword(text);
   };
 
@@ -101,7 +124,6 @@ const Login: React.FC = () => {
 
   const isLoginDisabled =
     email.length === 0 || !isEmailValid || password.length === 0 || loading;
-  console.log("isLoginDisabled", isLoginDisabled);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>

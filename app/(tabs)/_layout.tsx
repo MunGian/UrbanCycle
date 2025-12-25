@@ -23,9 +23,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="donate"
+        name="post"
         options={{
-          title: "Donate",
+          title: "Post",
         }}
       />
       <Tabs.Screen
