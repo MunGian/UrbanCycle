@@ -9,15 +9,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const user = useUserStore((s) => s.user);
   const setUser = useUserStore((s) => s.setUser);
   const clearUser = useUserStore((s) => s.clearUser);
-
   const onUserNameEmpty = () => {
-    SooBottomSheet.push({
-      title: "Enter your details",
-      needPadding: true,
-      needCloseButton: false,
-      isDismissible: false,
-      child: <FillUpDetailsBottomSheet />,
-    });
+    setTimeout(() => {
+      SooBottomSheet.push({
+        title: "Enter your details",
+        needPadding: true,
+        needCloseButton: false,
+        isDismissible: false,
+        child: <FillUpDetailsBottomSheet />,
+      });
+    }, 800);
   };
 
   useEffect(() => {

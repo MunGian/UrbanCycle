@@ -1,19 +1,18 @@
 import EmphasizedText from "@/components/EmphasizedText";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
-import { fetchUserProfile } from "@/lib/api/api";
-import { supabase } from "@/lib/utils/supabase";
+import { insertUserName } from "@/lib/api/api";
 import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import React, { useState } from "react";
 import { Alert, Platform, Text, TouchableOpacity, View } from "react-native";
+import FillUpAvatarBottomSheet from "./FillUpAvatarBottomSheet";
 
 const FillUpDetailsBottomSheet: React.FC = () => {
   const setUser = useUserStore((s) => s.setUser);
 
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
-
   const [isFirstNameFocused, setIsFirstNameFocused] = useState<boolean>(false);
   const [isLastNameFocused, setIsLastNameFocused] = useState<boolean>(false);
 
@@ -22,34 +21,18 @@ const FillUpDetailsBottomSheet: React.FC = () => {
       Alert.alert("Missing info", "Please enter your first and last name.");
       return;
     }
+    const profile = await insertUserName(firstName, lastName);
+    await setUser(profile!);
+    SooBottomSheet.pop();
+    onOpenAvatarBottomSheet();
+  };
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    console.log("Current user:", user, authError);
-    if (!user) {
-      Alert.alert("Error", "User not authenticated");
-      return;
-    }
-
-    const { error } = await supabase.from("user").upsert({
-      id: user.id,
-      email: user.email,
-      first_name: firstName,
-      last_name: lastName,
+  const onOpenAvatarBottomSheet = () => {
+    SooBottomSheet.push({
+      title: "Upload your avatar",
+      needPadding: true,
+      child: <FillUpAvatarBottomSheet />,
     });
-
-    if (error) {
-      console.error("Profile upsert error:", error);
-      Alert.alert("Error", "Failed to save profile");
-      return;
-    }
-
-    console.log("Profile saved successfully");
-    const profile = await fetchUserProfile(user.id);
-    setUser(profile);
-    SooBottomSheet.popAll();
   };
 
   const inputPaddingY = React.useMemo(
@@ -136,13 +119,7 @@ const FillUpDetailsBottomSheet: React.FC = () => {
       >
         <Text className="text-black text-lg font-medium">Next</Text>
       </TouchableOpacity>
-      <View
-        className="h-12"
-        // style={{
-        //   height: isEmailFocused ? screenHeight * 0.4 : screenHeight * 0.4,
-        // }}
-        // className={`transition-all duration-500`}
-      />
+      <View className="h-12" />
     </View>
   );
 };
