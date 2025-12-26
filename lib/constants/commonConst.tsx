@@ -1,3 +1,14 @@
+export const category = [
+  "All",
+  "Clothing",
+  "Electronics",
+  "Furniture",
+  "Books",
+  "Home & Garden",
+  "Sports",
+  "Others",
+];
+
 export const penangLocations = [
   "Air Itam",
   "Balik Pulau",

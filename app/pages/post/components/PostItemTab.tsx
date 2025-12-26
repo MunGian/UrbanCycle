@@ -4,6 +4,7 @@ import { SooBottomSheet } from "@/components/SooBottomSheetController";
 import { insertItem, uploadItemImage } from "@/lib/api/api";
 import { ListedItem } from "@/lib/api/apiModel";
 import {
+  category,
   formatLocalDateTime,
   penangLocations,
 } from "@/lib/constants/commonConst";
@@ -22,7 +23,6 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { category } from "../../home/_layout";
 
 interface PostItemTabProps {
   onPostItem: (item: ListedItem) => void;
@@ -128,7 +128,12 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
   };
 
   const handlePostItem = async () => {
-    if (!title || !selectedCategory || images.length === 0) {
+    if (
+      !title ||
+      !selectedCategory ||
+      !selectedLocation ||
+      images.length === 0
+    ) {
       Alert.alert(
         "Missing fields",
         "Please fill in all required fields and add at least one photo."

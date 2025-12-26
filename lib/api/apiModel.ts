@@ -18,31 +18,6 @@ export interface User {
   bio?: string;
 }
 
-export interface MarketplaceItem {
-  id: string;
-  name: string;
-  price: number;
-  seller: string;
-  avatar: string;
-  image: string;
-  condition: string;
-  category: Category;
-  location?: string;
-}
-
-export interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  seller: string;
-  avatar: string;
-  image: string;
-  quantity: number;
-  location?: string;
-  selected?: boolean;
-  category: string;
-}
-
 export interface ListedItem {
   id: string;
   title: string;
@@ -56,6 +31,24 @@ export interface ListedItem {
   images: string[] | string;
   created_at?: Date;
   updated_at?: Date;
+}
+
+export interface MarketplaceItem {
+  user: User;
+  listed_item: ListedItem;
+}
+
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  seller: string;
+  avatar: string;
+  image: string;
+  quantity: number;
+  location?: string;
+  selected?: boolean;
+  category: string;
 }
 
 export interface Message {

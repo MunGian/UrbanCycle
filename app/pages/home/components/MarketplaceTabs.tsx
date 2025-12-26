@@ -1,7 +1,13 @@
 import { MarketplaceItem } from "@/lib/api/apiModel";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import React, { FC, useMemo } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -9,25 +15,34 @@ interface MarketplaceTabsProps {
   query: string;
   selectedCategory: string;
   renderItem: (item: { item: MarketplaceItem }) => React.ReactElement;
-  dummyMarketplaceData: MarketplaceItem[];
+  marketplaceData: MarketplaceItem[];
+  onRefresh: () => Promise<void>;
+  refreshing: boolean;
 }
 
 interface MarketplaceTabContentProps {
   items: MarketplaceItem[];
   renderItem: (item: { item: MarketplaceItem }) => React.ReactElement;
   emptyMessage?: string;
+  onRefresh: () => Promise<void>;
+  refreshing: boolean;
 }
 
 const MarketplaceTabContent: FC<MarketplaceTabContentProps> = ({
   items,
   renderItem,
   emptyMessage = "No items found.",
+  onRefresh,
+  refreshing,
 }) => {
   return (
     <ScrollView
       className="flex-1 bg-white"
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ flexGrow: 1 }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     >
       <Pressable className="flex-1">
         <View className="flex-row flex-wrap px-2 pb-24 pt-2 justify-between">
@@ -47,46 +62,65 @@ const MarketplaceTabContent: FC<MarketplaceTabContentProps> = ({
 const AllItemsTab: FC<MarketplaceTabsProps> = ({
   query,
   selectedCategory,
-  dummyMarketplaceData,
+  marketplaceData,
   renderItem,
+  onRefresh,
+  refreshing,
 }) => {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return dummyMarketplaceData.filter((it) => {
+    return marketplaceData.filter((it) => {
       const matchesCategory =
-        selectedCategory === "All" || it.category === selectedCategory;
+        selectedCategory === "All" ||
+        it.listed_item.category === selectedCategory;
       const matchesQuery =
         q === "" ||
-        it.name.toLowerCase().includes(q) ||
-        it.seller.toLowerCase().includes(q) ||
-        (it.location || "").toLowerCase().includes(q);
+        it.listed_item.title.toLowerCase().includes(q) ||
+        (it.user ? `${it.user.first_name} ${it.user.last_name}` : "")
+          .toLowerCase()
+          .includes(q) ||
+        (it.listed_item.location || "").toLowerCase().includes(q);
       return matchesCategory && matchesQuery;
     });
-  }, [query, selectedCategory, dummyMarketplaceData]);
+  }, [query, selectedCategory, marketplaceData]);
 
-  return <MarketplaceTabContent items={filtered} renderItem={renderItem} />;
+  return (
+    <MarketplaceTabContent
+      items={filtered}
+      renderItem={renderItem}
+      onRefresh={onRefresh}
+      refreshing={refreshing}
+    />
+  );
 };
 
 const FreeItemsTab: FC<MarketplaceTabsProps> = ({
   query,
   selectedCategory,
-  dummyMarketplaceData,
+  marketplaceData,
   renderItem,
+  onRefresh,
+  refreshing,
 }) => {
   const freeItems = useMemo(() => {
-    return dummyMarketplaceData.filter((item) => item.price === 0);
-  }, [dummyMarketplaceData]);
+    return marketplaceData.filter(
+      (item) => item.listed_item.is_free || item.listed_item.price === 0
+    );
+  }, [marketplaceData]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return freeItems.filter((it) => {
       const matchesCategory =
-        selectedCategory === "All" || it.category === selectedCategory;
+        selectedCategory === "All" ||
+        it.listed_item.category === selectedCategory;
       const matchesQuery =
         q === "" ||
-        it.name.toLowerCase().includes(q) ||
-        it.seller.toLowerCase().includes(q) ||
-        (it.location || "").toLowerCase().includes(q);
+        it.listed_item.title.toLowerCase().includes(q) ||
+        (it.user ? `${it.user.first_name} ${it.user.last_name}` : "")
+          .toLowerCase()
+          .includes(q) ||
+        (it.listed_item.location || "").toLowerCase().includes(q);
       return matchesCategory && matchesQuery;
     });
   }, [query, selectedCategory, freeItems]);
@@ -96,6 +130,8 @@ const FreeItemsTab: FC<MarketplaceTabsProps> = ({
       items={filtered}
       renderItem={renderItem}
       emptyMessage="No free items found."
+      onRefresh={onRefresh}
+      refreshing={refreshing}
     />
   );
 };
@@ -103,8 +139,10 @@ const FreeItemsTab: FC<MarketplaceTabsProps> = ({
 const NearbyTab: FC<MarketplaceTabsProps> = ({
   query,
   selectedCategory,
-  dummyMarketplaceData,
+  marketplaceData,
   renderItem,
+  onRefresh,
+  refreshing,
 }) => {
   const nearbyItems = useMemo(() => {
     const nearbyLocations = [
@@ -121,54 +159,76 @@ const NearbyTab: FC<MarketplaceTabsProps> = ({
       "Balik Pulau",
       "USM Gelugor",
     ];
-    return dummyMarketplaceData.filter((item) =>
-      nearbyLocations.includes(item.location || "")
+    return marketplaceData.filter((item) =>
+      nearbyLocations.includes(item.listed_item.location || "")
     );
-  }, [dummyMarketplaceData]);
+  }, [marketplaceData]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return nearbyItems.filter((it) => {
       const matchesCategory =
-        selectedCategory === "All" || it.category === selectedCategory;
+        selectedCategory === "All" ||
+        it.listed_item.category === selectedCategory;
       const matchesQuery =
         q === "" ||
-        it.name.toLowerCase().includes(q) ||
-        it.seller.toLowerCase().includes(q) ||
-        (it.location || "").toLowerCase().includes(q);
+        it.listed_item.title.toLowerCase().includes(q) ||
+        (it.user ? `${it.user.first_name} ${it.user.last_name}` : "")
+          .toLowerCase()
+          .includes(q) ||
+        (it.listed_item.location || "").toLowerCase().includes(q);
       return matchesCategory && matchesQuery;
     });
   }, [query, selectedCategory, nearbyItems]);
 
-  return <MarketplaceTabContent items={filtered} renderItem={renderItem} />;
+  return (
+    <MarketplaceTabContent
+      items={filtered}
+      renderItem={renderItem}
+      onRefresh={onRefresh}
+      refreshing={refreshing}
+    />
+  );
 };
 
 const ForMeTab: FC<MarketplaceTabsProps> = ({
   query,
   selectedCategory,
-  dummyMarketplaceData,
+  marketplaceData,
   renderItem,
+  onRefresh,
+  refreshing,
 }) => {
   const forMeItems = useMemo(() => {
-    const shuffled = [...dummyMarketplaceData].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, Math.ceil(dummyMarketplaceData.length * 0.7));
-  }, [dummyMarketplaceData]);
+    const shuffled = [...marketplaceData].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.ceil(marketplaceData.length * 0.7));
+  }, [marketplaceData]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return forMeItems.filter((it) => {
       const matchesCategory =
-        selectedCategory === "All" || it.category === selectedCategory;
+        selectedCategory === "All" ||
+        it.listed_item.category === selectedCategory;
       const matchesQuery =
         q === "" ||
-        it.name.toLowerCase().includes(q) ||
-        it.seller.toLowerCase().includes(q) ||
-        (it.location || "").toLowerCase().includes(q);
+        it.listed_item.title.toLowerCase().includes(q) ||
+        (it.user ? `${it.user.first_name} ${it.user.last_name}` : "")
+          .toLowerCase()
+          .includes(q) ||
+        (it.listed_item.location || "").toLowerCase().includes(q);
       return matchesCategory && matchesQuery;
     });
   }, [query, selectedCategory, forMeItems]);
 
-  return <MarketplaceTabContent items={filtered} renderItem={renderItem} />;
+  return (
+    <MarketplaceTabContent
+      items={filtered}
+      renderItem={renderItem}
+      onRefresh={onRefresh}
+      refreshing={refreshing}
+    />
+  );
 };
 
 const MarketplaceTabs: FC<MarketplaceTabsProps> = (props) => {

@@ -1,4 +1,4 @@
-import { User } from "@/lib/api/apiModel";
+import { MarketplaceItem, User } from "@/lib/api/apiModel";
 import { supabase } from "@/lib/utils/supabase";
 import { Alert } from "react-native";
 
@@ -103,4 +103,41 @@ export const fetchUserItems = async (userId: string) => {
   }
 
   return data;
+};
+
+export const fetchMarketplaceItems = async (): Promise<MarketplaceItem[]> => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let query = supabase.from("item").select("*, user:user_id (*)");
+
+  if (user) {
+    query = query.neq("user_id", user.id);
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Fetch marketplace items error:", error);
+    return [];
+  }
+
+  return data.map((item: any) => ({
+    user: item.user,
+    listed_item: {
+      id: item.id,
+      title: item.title,
+      category: item.category,
+      location: item.location,
+      description: item.description,
+      is_free: item.is_free,
+      price: item.price,
+      status: item.status,
+      date: item.created_at,
+      images: item.images,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    },
+  }));
 };

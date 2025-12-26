@@ -26,7 +26,7 @@ const PostPage: React.FC = () => {
       category: item.category,
       location: item.location,
       description: item.description,
-      price: item.is_free ? 0 : item.price,
+      price: item?.is_free ? 0 : item.price,
       status: item.status === "available" ? "Active" : item.status,
       date: formatLocalDateTime(item.created_at!),
       images: item.images && item.images.length > 0 ? item.images : "",

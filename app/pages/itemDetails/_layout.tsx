@@ -19,40 +19,13 @@ const ItemDetailsPage: React.FC = () => {
   const [message, setMessage] = useState<string>("");
   const [isLoved, setIsLoved] = useState<boolean>(false); // toggle heart
 
-  const item: MarketplaceItem = route.params?.item || {
-    id: "1",
-    name: "Batik Shirt (L)",
-    seller: "Chistina Wong",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    image:
-      "https://images.unsplash.com/photo-1551028719-00167b16ebc5?w=400&h=400&fit=crop",
-    condition: "Like New",
-    category: "Clothing",
-    location: "Gelugor",
-  };
-
-  const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case "Like New":
-        return "bg-green-100 text-green-700";
-      case "Excellent":
-        return "bg-blue-100 text-blue-700";
-      case "Good":
-        return "bg-yellow-100 text-yellow-700";
-      case "Used":
-        return "bg-orange-100 text-orange-700";
-      case "New":
-        return "bg-emerald-100 text-emerald-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
+  const item: MarketplaceItem = route.params?.item;
 
   const handleContactDonor = () => {
     if (message.trim()) {
       Alert.alert(
         "Message Sent",
-        `Your message has been sent to ${item.seller}!`,
+        `Your message has been sent to ${item.user?.first_name || "Donor"}!`,
         [{ text: "OK" }]
       );
       setMessage("");
@@ -90,7 +63,11 @@ const ItemDetailsPage: React.FC = () => {
         {/* Image */}
         <View className="w-full bg-gray-100 aspect-square overflow-hidden">
           <Image
-            source={{ uri: item.image }}
+            source={{
+              uri: Array.isArray(item.listed_item.images)
+                ? item.listed_item.images[0]
+                : item.listed_item.images,
+            }}
             className="w-full h-full"
             resizeMode="cover"
           />
@@ -100,18 +77,20 @@ const ItemDetailsPage: React.FC = () => {
         <View className="px-5 py-5 bg-white -mt-8 rounded-t-3xl shadow-sm">
           {/* Title */}
           <Text className="text-2xl font-bold text-black mb-0 leading-7">
-            {item.name}
+            {item.listed_item.title}
           </Text>
 
           {/* Price */}
           <EmphasizedText
             text={
-              item.price === 0
+              item.listed_item.is_free
                 ? "Free"
-                : `<em>RM</em> ${(item.price || 0).toLocaleString("en-MY")}`
+                : `<em>RM</em> ${(item.listed_item.price || 0).toLocaleString(
+                    "en-MY"
+                  )}`
             }
             className={`text-2xl font-bold mt-1 mb-2 ${
-              item.price === 0 ? "text-emerald-600" : "text-gray-800"
+              item.listed_item.is_free ? "text-emerald-600" : "text-gray-800"
             }`}
             emClassName="text-xl font-bold"
           />
@@ -121,14 +100,14 @@ const ItemDetailsPage: React.FC = () => {
             <View>
               <Text className="text-xs text-gray-500 mb-1">Category</Text>
               <Text className="text-sm font-semibold text-black">
-                {item.category}
+                {item.listed_item.category}
               </Text>
             </View>
 
             <View>
               <Text className="text-xs text-gray-500 mb-1">Location</Text>
               <Text className="text-sm font-semibold text-black">
-                {item.location || "N/A"}
+                {item.listed_item.location || "N/A"}
               </Text>
             </View>
           </View>
@@ -138,14 +117,16 @@ const ItemDetailsPage: React.FC = () => {
           {/* Description */}
           <View>
             <Text className="text-lg font-bold text-black mb-2">
-              About This Item
+              Description
             </Text>
-            <Text className="text-sm text-gray-600 leading-6">
-              This is a {item.condition.toLowerCase()}{" "}
-              {item.category.toLowerCase()} item available for reuse. Part of
-              our circular economy initiative to reduce waste in Penang and
-              promote sustainable sharing culture.
+            <Text className="text-sm text-gray-600 leading-5">
+              {item.listed_item.description}
             </Text>
+            {/* <Text className="text-sm text-gray-600 leading-5 mt-2">
+              This is a {item.listed_item.category.toLowerCase()} item available
+              for reuse. Part of our circular economy initiative to reduce waste
+              in Penang and promote sustainable sharing culture.
+            </Text> */}
           </View>
 
           <View className="border-t border-gray-200 my-6" />
@@ -158,15 +139,23 @@ const ItemDetailsPage: React.FC = () => {
           <View className="bg-gray-50 rounded-2xl p-4 border border-gray-100 shadow-sm">
             <View className="flex-row items-center mb-4">
               <Image
-                source={{ uri: item.avatar }}
+                source={{
+                  uri:
+                    item.user?.avatar_url ||
+                    "https://randomuser.me/api/portraits/lego/1.jpg",
+                }}
                 className="w-12 h-12 rounded-full bg-gray-200"
               />
 
               <View className="ml-3 flex-1">
                 <Text className="text-sm font-bold text-black">
-                  {item.seller}
+                  {item.user
+                    ? `${item.user.first_name} ${item.user.last_name}`
+                    : "Unknown"}
                 </Text>
-                <Text className="text-xs text-gray-500">{item.location}</Text>
+                <Text className="text-xs text-gray-500">
+                  {item.listed_item.location}
+                </Text>
               </View>
             </View>
 
@@ -207,7 +196,7 @@ const ItemDetailsPage: React.FC = () => {
             className={`bg-black py-4 mb-4 rounded-full items-center shadow-lg flex-row justify-center`}
           >
             <Text className="text-white font-bold text-lg mr-2">
-              Send Message to {item.seller}
+              Send Message to {item.user?.first_name || "Donor"}
             </Text>
             <MaterialIcons name="arrow-forward" size={20} color="white" />
           </TouchableOpacity>
