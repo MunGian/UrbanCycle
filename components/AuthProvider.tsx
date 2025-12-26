@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isDismissible: false,
         child: <FillUpDetailsBottomSheet />,
       });
-    }, 800);
+    }, 1200);
   };
 
   useEffect(() => {

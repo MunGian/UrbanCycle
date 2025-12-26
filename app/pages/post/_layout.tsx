@@ -27,7 +27,7 @@ const PostPage: React.FC = () => {
       location: item.location,
       description: item.description,
       price: item?.is_free ? 0 : item.price,
-      status: item.status === "available" ? "Active" : item.status,
+      status: item.status,
       date: formatLocalDateTime(item.created_at!),
       images: item.images && item.images.length > 0 ? item.images : "",
     }));
@@ -35,7 +35,15 @@ const PostPage: React.FC = () => {
   };
 
   const handlePostItem = (newItem: ListedItem) => {
-    setListedItems([newItem, ...listedItems]);
+    setListedItems((prevItems) => {
+      const index = prevItems.findIndex((i) => i.id === newItem.id);
+      if (index !== -1) {
+        const updatedItems = [...prevItems];
+        updatedItems[index] = newItem;
+        return updatedItems;
+      }
+      return [newItem, ...prevItems];
+    });
     loadItems(); // Reload to get the real data from DB
   };
 

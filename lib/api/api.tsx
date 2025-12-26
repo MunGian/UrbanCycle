@@ -85,11 +85,6 @@ export const uploadItemImage = async (userId: string, imageUri: string) => {
   return data.publicUrl;
 };
 
-export const insertItem = async (item: any) => {
-  const { error } = await supabase.from("item").insert(item);
-  if (error) throw error;
-};
-
 export const fetchUserItems = async (userId: string) => {
   const { data, error } = await supabase
     .from("item")
@@ -115,6 +110,7 @@ export const fetchMarketplaceItems = async (): Promise<MarketplaceItem[]> => {
   if (user) {
     query = query.neq("user_id", user.id);
   }
+  query = query.eq("status", "Active");
 
   const { data, error } = await query.order("created_at", { ascending: false });
 
@@ -140,4 +136,44 @@ export const fetchMarketplaceItems = async (): Promise<MarketplaceItem[]> => {
       updated_at: item.updated_at,
     },
   }));
+};
+
+export const insertItem = async (item: any) => {
+  const { error } = await supabase.from("item").insert(item);
+  if (error) throw error;
+};
+
+export const deleteItem = async (itemId: string) => {
+  // Fetch item to get images
+  const { data: item } = await supabase
+    .from("item")
+    .select("images")
+    .eq("id", itemId)
+    .single();
+
+  if (item?.images && Array.isArray(item.images)) {
+    const imagePaths = item.images.map((url: string) => {
+      // Extract filename from URL
+      return url.substring(url.lastIndexOf("/") + 1);
+    });
+
+    if (imagePaths.length > 0) {
+      const { error: storageError } = await supabase.storage
+        .from("item-images")
+        .remove(imagePaths);
+
+      if (storageError) console.error("Error deleting images:", storageError);
+    }
+  }
+
+  const { error } = await supabase.from("item").delete().eq("id", itemId);
+  if (error) throw error;
+};
+
+export const updateItem = async (itemId: string, updates: any) => {
+  const { error } = await supabase
+    .from("item")
+    .update(updates)
+    .eq("id", itemId);
+  if (error) throw error;
 };

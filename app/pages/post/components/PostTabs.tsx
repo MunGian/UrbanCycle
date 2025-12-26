@@ -1,6 +1,6 @@
 import { ListedItem } from "@/lib/api/apiModel";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import React from "react";
+import React, { useState } from "react";
 import MyListingsTab from "./MyListingsTab";
 import ListItemTab from "./PostItemTab";
 
@@ -17,6 +17,8 @@ const PostTabs: React.FC<PostTabsProps> = ({
   onPostItem,
   onRefresh,
 }) => {
+  const [itemToEdit, setItemToEdit] = useState<ListedItem | null>(null);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -37,16 +39,40 @@ const PostTabs: React.FC<PostTabsProps> = ({
         animationEnabled: true,
       }}
     >
-      <Tab.Screen name="MyListings" options={{ title: "My Listings" }}>
-        {() => (
-          <MyListingsTab listedItems={listedItems} onRefresh={onRefresh} />
+      <Tab.Screen
+        name="MyListings"
+        options={{ title: "My Listings" }}
+        listeners={{
+          focus: () => setItemToEdit(null),
+        }}
+      >
+        {({ navigation }) => (
+          <MyListingsTab
+            listedItems={listedItems}
+            onRefresh={onRefresh}
+            onEdit={(item) => {
+              setItemToEdit(item);
+              navigation.navigate("ListItem");
+            }}
+          />
         )}
       </Tab.Screen>
-      <Tab.Screen name="ListItem" options={{ title: "Post Item" }}>
+      <Tab.Screen
+        name="ListItem"
+        options={{ title: itemToEdit ? "Edit Item" : "Post Item" }}
+      >
         {({ navigation }) => (
           <ListItemTab
             onPostItem={onPostItem}
-            jumpToMyListings={() => navigation.navigate("MyListings")}
+            jumpToMyListings={() => {
+              setItemToEdit(null);
+              navigation.navigate("MyListings");
+            }}
+            itemToEdit={itemToEdit}
+            onCancelEdit={() => {
+              setItemToEdit(null);
+              navigation.navigate("MyListings");
+            }}
           />
         )}
       </Tab.Screen>

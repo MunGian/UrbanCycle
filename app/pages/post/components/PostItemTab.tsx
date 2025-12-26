@@ -1,7 +1,7 @@
 import CategoryBottomSheet from "@/app/pages/home/components/CategoryBottomSheet";
 import ItemPriceBottomSheet from "@/app/pages/post/components/ItemPriceBottomSheet";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
-import { insertItem, uploadItemImage } from "@/lib/api/api";
+import { insertItem, updateItem, uploadItemImage } from "@/lib/api/api";
 import { ListedItem } from "@/lib/api/apiModel";
 import {
   category,
@@ -11,7 +11,7 @@ import {
 import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -27,11 +27,15 @@ import {
 interface PostItemTabProps {
   onPostItem: (item: ListedItem) => void;
   jumpToMyListings: () => void;
+  itemToEdit?: ListedItem | null;
+  onCancelEdit?: () => void;
 }
 
 const PostItemTab: React.FC<PostItemTabProps> = ({
   onPostItem,
   jumpToMyListings,
+  itemToEdit,
+  onCancelEdit,
 }) => {
   const user = useUserStore((s) => s.user);
   const [title, setTitle] = useState<string>("");
@@ -47,6 +51,32 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
   const [isPriceFocused, setIsPriceFocused] = useState<boolean>(false);
   const [isDescriptionFocused, setIsDescriptionFocused] =
     useState<boolean>(false);
+
+  useEffect(() => {
+    if (itemToEdit) {
+      setTitle(itemToEdit.title);
+      setDescription(itemToEdit.description || "");
+      setSelectedCategory(itemToEdit.category);
+      setSelectedLocation(itemToEdit.location || "");
+      if (Array.isArray(itemToEdit.images)) {
+        setImages(itemToEdit.images);
+      } else if (typeof itemToEdit.images === "string" && itemToEdit.images) {
+        setImages([itemToEdit.images]);
+      } else {
+        setImages([]);
+      }
+      setIsFree(itemToEdit.price === 0);
+      setPrice(itemToEdit.price ? itemToEdit.price.toString() : "");
+    } else {
+      setTitle("");
+      setDescription("");
+      setSelectedCategory("");
+      setSelectedLocation("");
+      setImages([]);
+      setIsFree(true);
+      setPrice("");
+    }
+  }, [itemToEdit]);
 
   const filteredCategories = category.filter((cat) => cat !== "All");
 
@@ -150,12 +180,16 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
       const uploadedImageUrls = [];
       if (user) {
         for (const imgUri of images) {
-          const url = await uploadItemImage(user.id, imgUri);
-          if (url) uploadedImageUrls.push(url);
+          if (imgUri.startsWith("http") || imgUri.startsWith("https")) {
+            uploadedImageUrls.push(imgUri);
+          } else {
+            const url = await uploadItemImage(user.id, imgUri);
+            if (url) uploadedImageUrls.push(url);
+          }
         }
       }
 
-      const newItem = {
+      const itemData = {
         user_id: user?.id,
         title,
         description,
@@ -163,15 +197,19 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
         images: uploadedImageUrls,
         is_free: isFree,
         price: isFree ? null : parseFloat(price),
-        status: "available",
+        status: "Active",
         location: selectedLocation,
       };
 
-      await insertItem(newItem);
+      if (itemToEdit) {
+        await updateItem(itemToEdit.id!, itemData);
+      } else {
+        await insertItem(itemData);
+      }
 
       // Also call the prop callback if needed for local update
       const listedItem: any = {
-        id: Date.now().toString(), // Temporary ID for UI
+        id: itemToEdit?.id || Date.now().toString(), // Temporary ID for UI
         title,
         category: selectedCategory,
         status: "Active",
@@ -195,7 +233,7 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
       jumpToMyListings();
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Failed to post item.");
+      Alert.alert("Error", `Failed to ${itemToEdit ? "update" : "post"} item.`);
     } finally {
       setLoading(false);
     }
@@ -303,7 +341,7 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
                     isPriceFocused ? "border-black" : "border-transparent"
                   }`}
                 >
-                  <MaterialIcons name="attach-money" size={20} color="black" />
+                  <Text className="font-medium text-base text-black">RM</Text>
                   <TextInput
                     className="flex-1 text-base text-black"
                     placeholder="Price"
@@ -368,9 +406,24 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
             }`}
           >
             <Text className="text-white font-bold text-lg">
-              {loading ? "Listing..." : "List Item"}
+              {loading
+                ? itemToEdit
+                  ? "Updating..."
+                  : "Listing..."
+                : itemToEdit
+                  ? "Update Item"
+                  : "List Item"}
             </Text>
           </TouchableOpacity>
+
+          {itemToEdit && onCancelEdit && (
+            <TouchableOpacity
+              onPress={onCancelEdit}
+              className="mt-4 bg-gray-200 rounded-full py-4 items-center shadow-lg"
+            >
+              <Text className="text-black font-bold text-lg">Cancel</Text>
+            </TouchableOpacity>
+          )}
 
           <View
             className={`${isDescriptionFocused || isPriceFocused ? "h-96" : "h-24"}`}

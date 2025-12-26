@@ -40,7 +40,7 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     loadItems();
-  }, []);
+  }, [user]);
 
   const loadItems = async () => {
     const items = await fetchMarketplaceItems();

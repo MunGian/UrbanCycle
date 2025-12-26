@@ -1,8 +1,11 @@
+import { SooBottomSheet } from "@/components/SooBottomSheetController";
+import { deleteItem, updateItem } from "@/lib/api/api";
 import { ListedItem } from "@/lib/api/apiModel";
 import { formatPrice } from "@/lib/constants/commonConst";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
+  Alert,
   Image,
   RefreshControl,
   ScrollView,
@@ -10,15 +13,18 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import OptionBottomSheet from "./OptionBottomSheet";
 
 interface MyListingsTabProps {
   listedItems: ListedItem[];
   onRefresh: () => Promise<void>;
+  onEdit: (item: ListedItem) => void;
 }
 
 const MyListingsTab: React.FC<MyListingsTabProps> = ({
   listedItems,
   onRefresh,
+  onEdit,
 }) => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
@@ -28,13 +34,89 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
     setRefreshing(false);
   };
 
+  const handleDelete = async (item: ListedItem) => {
+    Alert.alert("Delete Item", "Are you sure you want to delete this item?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteItem(item.id!);
+            await onRefresh();
+          } catch (error) {
+            console.error("Failed to delete item:", error);
+            Alert.alert("Error", "Failed to delete item");
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleChangeStatus = (item: ListedItem) => {
+    SooBottomSheet.push({
+      title: "Change Status",
+      child: (
+        <OptionBottomSheet
+          options={[
+            { label: "Active", value: "Active" },
+            { label: "Reserved", value: "Reserved" },
+            { label: "Sold", value: "Sold" },
+            { label: "Donated", value: "Donated" },
+          ]}
+          selectedValue={item.status}
+          paddingBottom={24}
+          onSelect={async (value) => {
+            try {
+              await updateItem(item.id!, { status: value });
+              await onRefresh();
+            } catch (error) {
+              console.error("Failed to update status:", error);
+              Alert.alert("Error", "Failed to update status");
+            }
+          }}
+        />
+      ),
+    });
+  };
+
+  const showOptions = (item: ListedItem) => {
+    SooBottomSheet.push({
+      title: "Options",
+      child: (
+        <OptionBottomSheet
+          options={[
+            { label: "Edit", value: "edit" },
+            { label: "Change Status", value: "status" },
+            { label: "Delete", value: "delete" },
+          ]}
+          selectedValue=""
+          paddingBottom={24}
+          onSelect={(value) => {
+            if (value === "edit") {
+              onEdit(item);
+            } else if (value === "delete") {
+              handleDelete(item);
+            } else if (value === "status") {
+              handleChangeStatus(item);
+            }
+          }}
+        />
+      ),
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Active":
         return "bg-green-100 text-green-700";
-      case "Pending":
+      case "Reserved":
         return "bg-yellow-100 text-yellow-700";
-      case "Donated/Sold":
+      case "Donated":
+      case "Sold":
         return "bg-gray-100 text-gray-500";
       default:
         return "bg-gray-100 text-gray-700";
@@ -87,7 +169,7 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
                     >
                       {item.title}
                     </Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => showOptions(item)}>
                       <MaterialIcons
                         name="more-horiz"
                         size={20}

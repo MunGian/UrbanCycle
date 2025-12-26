@@ -1,5 +1,6 @@
 import EmphasizedText from "@/components/EmphasizedText";
 import { MarketplaceItem } from "@/lib/api/apiModel";
+import { formatLocalDateTime } from "@/lib/constants/commonConst";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useState } from "react";
@@ -20,6 +21,7 @@ const ItemDetailsPage: React.FC = () => {
   const [isLoved, setIsLoved] = useState<boolean>(false); // toggle heart
 
   const item: MarketplaceItem = route.params?.item;
+  console.log("Item details route params:", route.params?.item);
 
   const handleContactDonor = () => {
     if (message.trim()) {
@@ -108,6 +110,13 @@ const ItemDetailsPage: React.FC = () => {
               <Text className="text-xs text-gray-500 mb-1">Location</Text>
               <Text className="text-sm font-semibold text-black">
                 {item.listed_item.location || "N/A"}
+              </Text>
+            </View>
+
+            <View>
+              <Text className="text-xs text-gray-500 mb-1">Posted On</Text>
+              <Text className="text-sm font-semibold text-black">
+                {formatLocalDateTime(item.listed_item.created_at!) || "N/A"}
               </Text>
             </View>
           </View>
