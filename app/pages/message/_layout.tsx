@@ -163,16 +163,16 @@ const MessagePage: React.FC = () => {
 
         {/* Search Bar */}
         <View
-          className={`flex-row items-center bg-gray-100 rounded-full px-4 py-2 border ${isSearchFocused ? "border-black" : "border-transparent"}`}
+          className={`flex-row items-center bg-gray-100 rounded-full px-4 py-1.5 border ${isSearchFocused ? "border-black" : "border-transparent"}`}
         >
-          <MaterialIcons name="search" size={20} color="#9CA3AF" />
+          <MaterialIcons name="search" size={22} color="#9CA3AF" />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
             placeholder="Search conversations"
-            className="flex-1 ml-2 text-sm text-black"
+            className="flex-1 ml-2 text-base text-black"
             placeholderTextColor="#9CA3AF"
           />
           {searchQuery.length > 0 && (

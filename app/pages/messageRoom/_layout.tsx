@@ -22,6 +22,7 @@ import {
 import MessageBubble from "./components/MessageBubble";
 
 const PAGE_SIZE = 20;
+let hasOpenedPicker = false;
 
 const MessageRoomPage: React.FC = () => {
   const router = useRouter();
@@ -161,6 +162,7 @@ const MessageRoomPage: React.FC = () => {
   };
 
   const pickImage = async () => {
+    hasOpenedPicker = true;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsMultipleSelection: true,
@@ -276,10 +278,11 @@ const MessageRoomPage: React.FC = () => {
 
   // On iOS, we always use padding (KeyboardAvoidingView behavior).
   // On Android, we use padding ONLY if the window was NOT resized by the OS.
+  // We also check if the picker was opened, because the resize bug usually only happens after using the picker.
   const bottomPadding =
     Platform.OS === "ios"
       ? keyboardHeight
-      : !isWindowResized && keyboardHeight > 0
+      : hasOpenedPicker && !isWindowResized && keyboardHeight > 0
         ? keyboardHeight
         : 0;
 
