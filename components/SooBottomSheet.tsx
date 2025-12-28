@@ -78,6 +78,7 @@ const SooBottomSheet: React.FC<SooBottomSheetProps> = ({
       enableContentPanningGesture={true}
       enableOverDrag={false}
       enableBlurKeyboardOnGesture={true}
+      android_keyboardInputMode="adjustResize"
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       onChange={handleSheetChanges}

@@ -1,13 +1,3 @@
-export type Category =
-  | "All"
-  | "Clothing"
-  | "Electronics"
-  | "Furniture"
-  | "Books"
-  | "Home & Garden"
-  | "Sports" 
-  |  "Others";
-
 export interface User {
   id: string;
   first_name: string;
@@ -51,14 +41,6 @@ export interface CartItem {
   category: string;
 }
 
-export interface Message {
-  id: string;
-  text: string;
-  timestamp: string;
-  isMe: boolean;
-  status?: "sent" | "delivered" | "read";
-}
-
 export interface Report {
   id: string;
   location: string;
@@ -69,4 +51,27 @@ export interface Report {
   image?: string;
 }
 
-export default {};
+export interface MessageRoom {
+  id: string;
+  user1_id: string;
+  user2_id: string;
+  last_message: string | null;
+  last_message_type: 'text' | 'image' | null;
+  last_message_at: string | null;
+  last_message_sender_id?: string | null;
+  created_at: string;
+  updated_at: string;
+  user1_unread_count?: number;
+  user2_unread_count?: number;
+  user1?: User;
+  user2?: User;
+}
+
+export interface Message {
+  id: string;
+  room_id: string;
+  sender_id: string;
+  type: 'text' | 'image';
+  content: string;
+  created_at: string;
+}

@@ -75,7 +75,6 @@ const HomePage: React.FC = () => {
   const navigateToCartPage = () => {
     Keyboard.dismiss();
     if (user) {
-      console.log("user =", user);
       router.push(Route.CartPage);
     } else {
       router.push(Route.LoginPage);

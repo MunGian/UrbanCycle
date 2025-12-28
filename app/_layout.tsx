@@ -22,9 +22,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView className="flex-1">
-        <SafeAreaView className="flex-1 bg-body">
-          <AuthProvider>
-            <SooBottomSheetProvider>
+        <AuthProvider>
+          <SooBottomSheetProvider>
+            <SafeAreaView className="flex-1 bg-body">
               <ToastProvider>
                 <StatusBar
                   barStyle="dark-content"
@@ -39,13 +39,13 @@ export default function RootLayout() {
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="pages/itemDetails" />
                   <Stack.Screen name="pages/message" />
-                  <Stack.Screen name="pages/chatRoom" />
+                  <Stack.Screen name="pages/messageRoom" />
                   <Stack.Screen name="pages/cart" />
                 </Stack>
               </ToastProvider>
-            </SooBottomSheetProvider>
-          </AuthProvider>
-        </SafeAreaView>
+            </SafeAreaView>
+          </SooBottomSheetProvider>
+        </AuthProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

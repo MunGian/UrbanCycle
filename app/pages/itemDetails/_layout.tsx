@@ -1,6 +1,8 @@
 import EmphasizedText from "@/components/EmphasizedText";
 import { MarketplaceItem } from "@/lib/api/apiModel";
 import { formatLocalDateTime } from "@/lib/constants/commonConst";
+import { supabase } from "@/lib/utils/supabase";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useState } from "react";
@@ -17,22 +19,88 @@ import {
 const ItemDetailsPage: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation();
+  const user = useUserStore((s) => s.user);
   const [message, setMessage] = useState<string>("");
   const [isLoved, setIsLoved] = useState<boolean>(false); // toggle heart
 
   const item: MarketplaceItem = route.params?.item;
   console.log("Item details route params:", route.params?.item);
 
-  const handleContactDonor = () => {
-    if (message.trim()) {
+  const handleContactDonor = async () => {
+    if (!user) {
       Alert.alert(
-        "Message Sent",
-        `Your message has been sent to ${item.user?.first_name || "Donor"}!`,
-        [{ text: "OK" }]
+        "Please login",
+        "You need to be logged in to send a message."
       );
-      setMessage("");
-    } else {
-      Alert.alert("Please write a message", "Enter a message before sending.");
+      return;
+    }
+
+    if (item.user?.id === user.id) {
+      Alert.alert("This is your item", "You cannot message yourself.");
+      return;
+    }
+
+    if (!item.user?.id) {
+      Alert.alert("Error", "Seller information is missing.");
+      return;
+    }
+
+    try {
+      // Check if room exists
+      const { data: rooms, error: fetchError } = await supabase
+        .from("message_room")
+        .select("*")
+        .or(
+          `and(user1_id.eq.${user.id},user2_id.eq.${item.user.id}),and(user1_id.eq.${item.user.id},user2_id.eq.${user.id})`
+        );
+
+      if (fetchError) {
+        console.error("Error fetching room:", fetchError);
+        throw fetchError;
+      }
+
+      let roomId;
+
+      if (rooms && rooms.length > 0) {
+        roomId = rooms[0].id;
+      } else {
+        // Create new room
+        const { data: newRoom, error: createError } = await supabase
+          .from("message_room")
+          .insert({
+            user1_id: user.id,
+            user2_id: item.user.id,
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        roomId = newRoom.id;
+      }
+
+      // If there is a message typed, send it
+      if (message.trim()) {
+        const { error: msgError } = await supabase.from("message").insert({
+          room_id: roomId,
+          sender_id: user.id,
+          content: message.trim(),
+          type: "text",
+        });
+        if (msgError) console.error("Error sending initial message:", msgError);
+        setMessage("");
+      }
+
+      // Navigate to chat room
+      (navigation as any).navigate("pages/messageRoom", {
+        chatId: roomId,
+        name: `${item.user.first_name} ${item.user.last_name}`,
+        avatar: item.user.avatar_url,
+        itemName: item.listed_item.title,
+        isOnline: "false",
+      });
+    } catch (error) {
+      console.error("Error initiating chat:", error);
+      Alert.alert("Error", "Could not start chat. Please try again.");
     }
   };
 

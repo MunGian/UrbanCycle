@@ -1,8 +1,11 @@
 import { AuthPlaceholder } from "@/components/AuthPlaceholder";
+import { MessageRoom } from "@/lib/api/apiModel";
+import { supabase } from "@/lib/utils/supabase";
 import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -12,91 +15,133 @@ import {
   View,
 } from "react-native";
 
-// Chat room type
-interface ChatRoom {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount: number;
-  isOnline: boolean;
-  itemName?: string;
-}
-
-// Dummy chat rooms data
-const dummyChatRooms: ChatRoom[] = [
-  {
-    id: "1",
-    name: "Chistina Wong",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    lastMessage: "Yes, the batik shirt is still available!",
-    timestamp: "10:30 AM",
-    unreadCount: 2,
-    isOnline: true,
-    itemName: "Batik Shirt (L)",
-  },
-  {
-    id: "2",
-    name: "Amir Hassan",
-    avatar:
-      "https://static.vecteezy.com/system/resources/thumbnails/005/346/410/small/close-up-portrait-of-smiling-handsome-young-caucasian-man-face-looking-at-camera-on-isolated-light-gray-studio-background-photo.jpg",
-    lastMessage: "Can pick up tomorrow at 3pm",
-    timestamp: "9:15 AM",
-    unreadCount: 0,
-    isOnline: false,
-    itemName: "Cotton Kurta Shirt",
-  },
-  {
-    id: "3",
-    name: "Ricky Owen",
-    avatar: "https://randomuser.me/api/portraits/men/46.jpg",
-    lastMessage: "The laptop is in good working condition 👍",
-    timestamp: "Yesterday",
-    unreadCount: 1,
-    isOnline: true,
-    itemName: "Dell Laptop",
-  },
-  {
-    id: "4",
-    name: "Asyikin",
-    avatar: "https://randomuser.me/api/portraits/women/72.jpg",
-    lastMessage: "Thank you for the dress! ❤️",
-    timestamp: "Yesterday",
-    unreadCount: 0,
-    isOnline: false,
-    itemName: "Kebaya Dress",
-  },
-  {
-    id: "5",
-    name: "Chris Paul",
-    avatar: "https://randomuser.me/api/portraits/men/22.jpg",
-    lastMessage: "Sure, I can deliver to your area",
-    timestamp: "Mon",
-    unreadCount: 0,
-    isOnline: true,
-    itemName: "Wood Chair Set",
-  },
-];
-
 const MessagePage: React.FC = () => {
   const user = useUserStore((s) => s.user);
   const navigation = useNavigation<any>();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [rooms, setRooms] = useState<MessageRoom[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const filteredChats = dummyChatRooms.filter(
-    (chat) =>
-      chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      chat.itemName?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    if (!user) return;
 
-  const handleChatPress = (chat: ChatRoom) => {
-    (navigation as any).navigate("pages/chatRoom", {
-      chatId: chat.id,
-      name: chat.name,
-      avatar: chat.avatar,
-      itemName: chat.itemName || "",
-      isOnline: chat.isOnline ? "true" : "false",
+    fetchRooms();
+
+    const channel = supabase
+      .channel("public:message_room")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "message_room",
+          filter: `user1_id=eq.${user.id}`,
+        },
+        (payload) => handleRealtimeUpdate(payload)
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "message_room",
+          filter: `user2_id=eq.${user.id}`,
+        },
+        (payload) => handleRealtimeUpdate(payload)
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const fetchRooms = async () => {
+    if (!user) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("message_room")
+      .select("*, user1:user1_id(*), user2:user2_id(*)")
+      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching rooms:", error);
+    } else {
+      setRooms(data || []);
+    }
+    setLoading(false);
+  };
+
+  const handleRealtimeUpdate = async (payload: any) => {
+    if (payload.eventType === "INSERT") {
+      const { data, error } = await supabase
+        .from("message_room")
+        .select("*, user1:user1_id(*), user2:user2_id(*)")
+        .eq("id", payload.new.id)
+        .single();
+
+      if (!error && data) {
+        setRooms((prev) => [data, ...prev]);
+      }
+    } else if (payload.eventType === "UPDATE") {
+      setRooms((prev) => {
+        const updatedRooms = prev.map((room) =>
+          room.id === payload.new.id ? { ...room, ...payload.new } : room
+        );
+        return updatedRooms.sort(
+          (a, b) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        );
+      });
+    } else if (payload.eventType === "DELETE") {
+      setRooms((prev) => prev.filter((room) => room.id !== payload.old.id));
+    }
+  };
+
+  const getOtherUser = (room: MessageRoom) => {
+    if (room.user1_id === user?.id) return room.user2;
+    return room.user1;
+  };
+
+  const getUnreadCount = (room: MessageRoom) => {
+    if (room.user1_id === user?.id) return room.user1_unread_count || 0;
+    return room.user2_unread_count || 0;
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+
+    if (date.toDateString() === now.toDateString()) {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+
+    if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    }
+
+    return date.toLocaleDateString();
+  };
+
+  const filteredRooms = rooms.filter((room) => {
+    const otherUser = getOtherUser(room);
+    const name = `${otherUser?.first_name} ${otherUser?.last_name}`;
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const handleChatPress = (room: MessageRoom) => {
+    const otherUser = getOtherUser(room);
+    (navigation as any).navigate("pages/messageRoom", {
+      chatId: room.id,
+      name: `${otherUser?.first_name} ${otherUser?.last_name}`,
+      avatar: otherUser?.avatar_url,
     });
   };
 
@@ -135,68 +180,79 @@ const MessagePage: React.FC = () => {
 
       {/* Chat List */}
       <ScrollView showsVerticalScrollIndicator={false}>
-        {filteredChats.length > 0 ? (
-          filteredChats.map((chat) => (
-            <TouchableOpacity
-              key={chat.id}
-              onPress={() => handleChatPress(chat)}
-              activeOpacity={0.7}
-              className="flex-row items-center px-4 py-3 border-b border-gray-50"
-            >
-              {/* Avatar with Online Indicator */}
-              <View className="relative">
-                <Image
-                  source={{ uri: chat.avatar }}
-                  className="w-14 h-14 rounded-full bg-gray-200"
-                />
-                {chat.isOnline && (
-                  <View className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
-                )}
-              </View>
+        {filteredRooms.length > 0 ? (
+          filteredRooms.map((room) => {
+            const otherUser = getOtherUser(room);
+            const unreadCount = getUnreadCount(room);
+            const name = `${otherUser?.first_name} ${otherUser?.last_name}`;
 
-              {/* Chat Info */}
-              <View className="flex-1 ml-3">
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-base font-semibold text-black">
-                    {chat.name}
-                  </Text>
-                  <Text
-                    className={`text-xs ${chat.unreadCount > 0 ? "text-black font-semibold" : "text-gray-500"}`}
-                  >
-                    {chat.timestamp}
-                  </Text>
-                </View>
-
-                {/* Item Name Tag */}
-                {chat.itemName && (
-                  <View className="flex-row items-center mt-0.5">
-                    <View className="bg-gray-100 px-2 py-0.5 rounded-full">
-                      <Text className="text-xs text-gray-600">
-                        {chat.itemName}
-                      </Text>
-                    </View>
-                  </View>
-                )}
-
-                {/* Last Message & Unread Count */}
-                <View className="flex-row items-center justify-between mt-1">
-                  <Text
-                    className={`text-sm flex-1 mr-2 ${chat.unreadCount > 0 ? "text-black font-medium" : "text-gray-500"}`}
-                    numberOfLines={1}
-                  >
-                    {chat.lastMessage}
-                  </Text>
-                  {chat.unreadCount > 0 && (
-                    <View className="bg-black rounded-full min-w-5 h-5 items-center justify-center px-1.5">
-                      <Text className="text-white text-xs font-bold">
-                        {chat.unreadCount}
-                      </Text>
+            return (
+              <TouchableOpacity
+                key={room.id}
+                onPress={() => handleChatPress(room)}
+                activeOpacity={0.7}
+                className="flex-row items-center px-4 py-3 border-b border-gray-50"
+              >
+                {/* Avatar */}
+                <View className="relative">
+                  {otherUser?.avatar_url ? (
+                    <Image
+                      source={{ uri: otherUser.avatar_url }}
+                      className="w-14 h-14 rounded-full bg-gray-200"
+                    />
+                  ) : (
+                    <View className="w-14 h-14 rounded-full bg-gray-200 items-center justify-center">
+                      <FontAwesome
+                        name="user-circle-o"
+                        size={42}
+                        color="black"
+                      />
                     </View>
                   )}
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))
+
+                {/* Chat Info */}
+                <View className="flex-1 ml-3">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-base font-semibold text-black">
+                      {name}
+                    </Text>
+                    <Text
+                      className={`text-xs ${
+                        unreadCount > 0
+                          ? "text-black font-semibold"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {room.updated_at ? formatTime(room.updated_at) : ""}
+                    </Text>
+                  </View>
+
+                  {/* Last Message & Unread Count */}
+                  <View className="flex-row items-center justify-between mt-1">
+                    <Text
+                      className={`text-sm flex-1 mr-2 ${
+                        unreadCount > 0
+                          ? "text-black font-medium"
+                          : "text-gray-500"
+                      }`}
+                      numberOfLines={1}
+                    >
+                      {room.last_message_sender_id === user?.id ? "You: " : ""}
+                      {room.last_message || "No messages yet"}
+                    </Text>
+                    {unreadCount > 0 && (
+                      <View className="bg-black rounded-full min-w-5 h-5 items-center justify-center px-1.5">
+                        <Text className="text-white text-xs font-bold">
+                          {unreadCount}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })
         ) : (
           <View className="flex-1 items-center justify-center py-20">
             <MaterialIcons

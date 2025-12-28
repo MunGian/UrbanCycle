@@ -114,7 +114,6 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
   };
 
   const onCategoryClicked = () => {
-    Keyboard.dismiss();
     SooBottomSheet.push({
       title: "Categories",
       needPadding: false,
@@ -143,7 +142,6 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
   };
 
   const onLocationClicked = () => {
-    Keyboard.dismiss();
     SooBottomSheet.push({
       title: "Locations",
       needPadding: false,
@@ -155,6 +153,33 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
         />
       ),
     });
+  };
+
+  const handlePriceChange = (text: string) => {
+    // Allow empty (so user can delete everything)
+    if (text === "") {
+      setPrice("");
+      return;
+    }
+
+    // Allow digits and dot only
+    const sanitized = text.replace(/[^0-9.]/g, "");
+
+    // Prevent multiple dots
+    const dotCount = (sanitized.match(/\./g) || []).length;
+    if (dotCount > 1) return;
+
+    // Allow trailing dot (e.g. "12.")
+    if (sanitized.endsWith(".")) {
+      setPrice(sanitized);
+      return;
+    }
+
+    // Limit to 2 decimals if decimal exists
+    const [int, dec] = sanitized.split(".");
+    if (dec && dec.length > 2) return;
+
+    setPrice(sanitized);
   };
 
   const handlePostItem = async () => {
@@ -347,7 +372,7 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
                     placeholder="Price"
                     keyboardType="numeric"
                     value={price}
-                    onChangeText={setPrice}
+                    onChangeText={handlePriceChange}
                     onFocus={() => setIsPriceFocused(true)}
                     onBlur={() => setIsPriceFocused(false)}
                   />
@@ -390,6 +415,7 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
                 multiline
                 textAlignVertical="top"
                 value={description}
+                maxLength={10}
                 onChangeText={setDescription}
                 onFocus={() => setIsDescriptionFocused(true)}
                 onBlur={() => setIsDescriptionFocused(false)}
