@@ -35,7 +35,7 @@ export default function GalleryPage() {
 
   return (
     <SafeAreaView className="flex-1 bg-black" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-2 bg-black z-10">
+      <View className="flex-row items-center px-4 py-2 bg-black z-10 -mt-4">
         <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
           <MaterialIcons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>

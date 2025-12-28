@@ -19,6 +19,7 @@ const MessagePage: React.FC = () => {
   const user = useUserStore((s) => s.user);
   const navigation = useNavigation<any>();
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
   const [rooms, setRooms] = useState<MessageRoom[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -161,11 +162,15 @@ const MessagePage: React.FC = () => {
         </View>
 
         {/* Search Bar */}
-        <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
+        <View
+          className={`flex-row items-center bg-gray-100 rounded-full px-4 py-2 border ${isSearchFocused ? "border-black" : "border-transparent"}`}
+        >
           <MaterialIcons name="search" size={20} color="#9CA3AF" />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
             placeholder="Search conversations"
             className="flex-1 ml-2 text-sm text-black"
             placeholderTextColor="#9CA3AF"
@@ -266,20 +271,6 @@ const MessagePage: React.FC = () => {
           </View>
         )}
       </ScrollView>
-
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        className="absolute bottom-6 right-6 w-14 h-14 bg-black rounded-full items-center justify-center shadow-lg"
-        style={{
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 6,
-          elevation: 8,
-        }}
-      >
-        <MaterialIcons name="chat" size={24} color="white" />
-      </TouchableOpacity>
     </View>
   );
 };

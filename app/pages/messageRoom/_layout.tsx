@@ -9,9 +9,9 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Image,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
@@ -35,6 +35,11 @@ const MessageRoomPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [isTextInputFocused, setIsTextInputFocused] = useState<boolean>(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [windowHeight, setWindowHeight] = useState(
+    Dimensions.get("window").height
+  );
 
   useEffect(() => {
     if (!chatId || !user) return;
@@ -72,17 +77,33 @@ const MessageRoomPage: React.FC = () => {
   }, [chatId, user]);
 
   useEffect(() => {
-    const keyboardListener = Keyboard.addListener(
+    const keyboardShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => {
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
         setTimeout(() => {
           scrollViewRef.current?.scrollToEnd({ animated: true });
         }, 100);
       }
     );
+    const keyboardHideListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    const dimensionListener = Dimensions.addEventListener(
+      "change",
+      ({ window }) => {
+        setWindowHeight(window.height);
+      }
+    );
 
     return () => {
-      keyboardListener.remove();
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
+      dimensionListener.remove();
     };
   }, []);
 
@@ -246,6 +267,22 @@ const MessageRoomPage: React.FC = () => {
 
   const groupedMessages = groupMessages(messages);
 
+  // Calculate if we need manual padding
+  // If window height is significantly smaller than screen height, it means the OS resized the window (adjustResize worked)
+  // If window height is close to screen height, but keyboard is visible, it means adjustResize failed (bug state)
+  const screenHeight = Dimensions.get("screen").height;
+  // Threshold to detect resize (e.g. > 150px difference)
+  const isWindowResized = screenHeight - windowHeight > 150;
+
+  // On iOS, we always use padding (KeyboardAvoidingView behavior).
+  // On Android, we use padding ONLY if the window was NOT resized by the OS.
+  const bottomPadding =
+    Platform.OS === "ios"
+      ? keyboardHeight
+      : !isWindowResized && keyboardHeight > 0
+        ? keyboardHeight
+        : 0;
+
   return (
     <View className="flex-1 bg-white">
       {/* Header */}
@@ -294,12 +331,7 @@ const MessageRoomPage: React.FC = () => {
         </View>
       )}
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
-        className="flex-1"
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-      >
+      <View style={{ flex: 1, paddingBottom: bottomPadding }}>
         {/* Messages */}
         <ScrollView
           ref={scrollViewRef}
@@ -350,10 +382,14 @@ const MessageRoomPage: React.FC = () => {
             <MaterialIcons name="add" size={24} color="#6B7280" />
           </TouchableOpacity>
 
-          <View className="flex-1 flex-row items-center bg-gray-100 rounded-full px-4 py-2 mx-2">
+          <View
+            className={`flex-1 flex-row items-center bg-gray-100 rounded-full px-4 py-1.5 mx-2 border-2 ${isTextInputFocused ? "border-black" : "border-transparent"}`}
+          >
             <TextInput
               value={newMessage}
               onChangeText={setNewMessage}
+              onFocus={() => setIsTextInputFocused(true)}
+              onBlur={() => setIsTextInputFocused(false)}
               placeholder="Type a message..."
               className="flex-1 text-sm text-black"
               placeholderTextColor="#9CA3AF"
@@ -364,13 +400,14 @@ const MessageRoomPage: React.FC = () => {
           </View>
 
           <TouchableOpacity
+            disabled={newMessage.trim() === ""}
             onPress={handleSendMessage}
-            className="w-14 h-14 bg-gray-800 rounded-full items-center justify-center"
+            className={`w-14 h-14 rounded-full items-center justify-center ${newMessage.trim() === "" ? "bg-gray-400" : "bg-gray-800"}`}
           >
             <MaterialIcons name="send" size={24} color="white" />
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </View>
   );
 };
