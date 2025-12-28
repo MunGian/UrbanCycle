@@ -3,10 +3,12 @@ import { supabase } from "@/lib/utils/supabase";
 import { useUserStore } from "@/lib/zustand/useUserStore";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -17,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import MessageBubble from "./components/MessageBubble";
 
 const PAGE_SIZE = 20;
 
@@ -28,10 +31,10 @@ const MessageRoomPage: React.FC = () => {
   const user = useUserStore((s) => s.user);
 
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [newMessage, setNewMessage] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
   useEffect(() => {
     if (!chatId || !user) return;
@@ -136,6 +139,63 @@ const MessageRoomPage: React.FC = () => {
     }
   };
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      selectionLimit: 10,
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      await Promise.all(
+        result.assets.map((asset) => sendImageMessage(asset.uri))
+      );
+    }
+  };
+
+  const sendImageMessage = async (uri: string) => {
+    if (!user || !chatId) return;
+
+    try {
+      const response = await fetch(uri);
+      const arrayBuffer = await response.arrayBuffer();
+      const fileName = `${chatId}/${Date.now()}_${Math.random()
+        .toString(36)
+        .substring(7)}.jpg`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("chat-images")
+        .upload(fileName, arrayBuffer, {
+          contentType: "image/jpeg",
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("chat-images")
+        .getPublicUrl(fileName);
+
+      const imageUrl = data.publicUrl;
+
+      const { error } = await supabase.from("message").insert({
+        room_id: chatId,
+        sender_id: user.id,
+        content: imageUrl,
+        type: "image",
+      });
+
+      if (error) {
+        console.error("Error sending image message:", error);
+        Alert.alert("Error", "Failed to send image message");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Error", "Failed to upload image");
+    }
+  };
+
   const handleSendMessage = async () => {
     if (newMessage.trim() === "" || !user || !chatId) return;
 
@@ -156,12 +216,35 @@ const MessageRoomPage: React.FC = () => {
     }
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const groupMessages = (msgs: Message[]) => {
+    return msgs.reduce((acc: any[], current) => {
+      const last = acc[acc.length - 1];
+
+      if (
+        last &&
+        last.sender_id === current.sender_id &&
+        last.type === "image" &&
+        current.type === "image" &&
+        new Date(last.created_at).toDateString() ===
+          new Date(current.created_at).toDateString()
+      ) {
+        if (!last.images) {
+          last.images = [last.content];
+        }
+        last.images.push(current.content);
+        last.created_at = current.created_at; // Update time to latest
+        return acc;
+      }
+
+      if (current.type === "image") {
+        return [...acc, { ...current, images: [current.content] }];
+      }
+
+      return [...acc, current];
+    }, []);
   };
+
+  const groupedMessages = groupMessages(messages);
 
   return (
     <View className="flex-1 bg-white">
@@ -242,64 +325,20 @@ const MessageRoomPage: React.FC = () => {
             </TouchableOpacity>
           )}
 
-          {messages.map((msg, index) => {
+          {groupedMessages.map((msg, index) => {
             const isMe = msg.sender_id === user?.id;
             const showDateDivider =
               index === 0 ||
               new Date(msg.created_at).toDateString() !==
-                new Date(messages[index - 1].created_at).toDateString();
+                new Date(groupedMessages[index - 1].created_at).toDateString();
 
             return (
-              <View key={msg.id} className="my-1">
-                {/* Date Divider */}
-                {showDateDivider && (
-                  <View className="items-center my-4">
-                    <Text className="text-xs text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
-                      {new Date(msg.created_at).toLocaleDateString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Message Bubble Container */}
-                <View
-                  className={`flex-row items-end mb-2 ${
-                    isMe ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {/* Timestamp for My Message (Left of bubble) */}
-                  {isMe && (
-                    <Text className="text-[11px] text-gray-400 mr-2 mb-0.5">
-                      {formatTime(msg.created_at)}
-                    </Text>
-                  )}
-
-                  {/* Bubble */}
-                  <View
-                    className={`max-w-[75%] px-4 py-3 rounded-xl ${
-                      isMe
-                        ? "bg-gray-800 rounded-br-sm"
-                        : "bg-gray-100 rounded-bl-sm"
-                    }`}
-                  >
-                    <Text
-                      className={`text-sm ${isMe ? "text-white" : "text-black"}`}
-                    >
-                      {msg.content}
-                    </Text>
-                  </View>
-
-                  {/* Timestamp for Opponent Message (Right of bubble) */}
-                  {!isMe && (
-                    <Text className="text-[11px] text-gray-400 ml-2 mb-0.5">
-                      {formatTime(msg.created_at)}
-                    </Text>
-                  )}
-                </View>
-              </View>
+              <MessageBubble
+                key={msg.id}
+                msg={msg}
+                isMe={isMe}
+                showDateDivider={showDateDivider}
+              />
             );
           })}
           <View className="h-8" />
@@ -307,7 +346,7 @@ const MessageRoomPage: React.FC = () => {
 
         {/* Message Input */}
         <View className="flex-row items-center px-4 py-3 border-t border-gray-100 bg-white">
-          <TouchableOpacity className="p-2">
+          <TouchableOpacity className="p-2" onPress={pickImage}>
             <MaterialIcons name="add" size={24} color="#6B7280" />
           </TouchableOpacity>
 
