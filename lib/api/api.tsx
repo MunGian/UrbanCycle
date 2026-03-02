@@ -1,4 +1,4 @@
-import { MarketplaceItem, User } from "@/lib/api/apiModel";
+import { MarketplaceItem, Report, User } from "@/lib/api/apiModel";
 import { supabase } from "@/lib/utils/supabase";
 import { Alert } from "react-native";
 
@@ -176,4 +176,71 @@ export const updateItem = async (itemId: string, updates: any) => {
     .update(updates)
     .eq("id", itemId);
   if (error) throw error;
+};
+
+// -------------------- Report Functions --------------------
+
+export const uploadReportImage = async (
+  userId: string,
+  imageUri: string,
+): Promise<string> => {
+  try {
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    const arrayBuffer = await new Response(blob).arrayBuffer();
+    const fileExt = imageUri.split(".").pop()?.toLowerCase() || "jpg";
+    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("report-images")
+      .upload(filePath, arrayBuffer, {
+        contentType: blob.type || "image/jpeg",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from("report-images")
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  } catch (err) {
+    console.error("Error uploading report image:", err);
+    throw err;
+  }
+};
+
+export const submitReport = async (
+  reportData: Omit<Report, "id" | "status" | "created_at">,
+) => {
+  const { error } = await supabase.from("reports").insert([
+    {
+      ...reportData,
+      status: "Pending",
+    },
+  ]);
+
+  if (error) {
+    console.error("Error submitting report:", error);
+    throw error;
+  }
+};
+
+export const fetchUserReports = async (userId: string): Promise<Report[]> => {
+  const { data, error } = await supabase
+    .from("reports")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching user reports:", error);
+    return [];
+  }
+
+  return data as Report[];
 };

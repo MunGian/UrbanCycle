@@ -4,7 +4,6 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Swipeable from "react-native-gesture-handler/Swipeable";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const CartPage: React.FC = () => {
   const navigation = useNavigation();
@@ -83,7 +82,7 @@ const CartPage: React.FC = () => {
   );
 
   return (
-    <SafeAreaView className="flex h-full w-full bg-white">
+    <View className="flex h-full w-full bg-white">
       {/* Header */}
       <View className="px-4 pt-4 pb-2 border-b border-gray-100 flex-row items-center">
         <TouchableOpacity
@@ -257,7 +256,7 @@ const CartPage: React.FC = () => {
           </TouchableOpacity>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 

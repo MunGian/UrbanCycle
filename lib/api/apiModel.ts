@@ -43,12 +43,16 @@ export interface CartItem {
 
 export interface Report {
   id: string;
+  user_id: string;
   location: string;
+  latitude: number | null;
+  longitude: number | null;
   description: string;
   type: string;
   status: "Pending" | "In Progress" | "Resolved";
-  date: string;
-  image?: string;
+  created_at: string;
+  updated_at?: string;
+  images?: string[];
 }
 
 export interface MessageRoom {
@@ -56,7 +60,7 @@ export interface MessageRoom {
   user1_id: string;
   user2_id: string;
   last_message: string | null;
-  last_message_type: 'text' | 'image' | null;
+  last_message_type: "text" | "image" | null;
   last_message_at: string | null;
   last_message_sender_id?: string | null;
   created_at: string;
@@ -71,7 +75,7 @@ export interface Message {
   id: string;
   room_id: string;
   sender_id: string;
-  type: 'text' | 'image';
+  type: "text" | "image";
   content: string;
   created_at: string;
 }

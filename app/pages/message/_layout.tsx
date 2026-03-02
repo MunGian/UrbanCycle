@@ -7,6 +7,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   ScrollView,
   Text,
@@ -21,7 +22,7 @@ const MessagePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
   const [rooms, setRooms] = useState<MessageRoom[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!user) return;
@@ -38,7 +39,7 @@ const MessagePage: React.FC = () => {
           table: "message_room",
           filter: `user1_id=eq.${user.id}`,
         },
-        (payload) => handleRealtimeUpdate(payload)
+        (payload) => handleRealtimeUpdate(payload),
       )
       .on(
         "postgres_changes",
@@ -48,7 +49,7 @@ const MessagePage: React.FC = () => {
           table: "message_room",
           filter: `user2_id=eq.${user.id}`,
         },
-        (payload) => handleRealtimeUpdate(payload)
+        (payload) => handleRealtimeUpdate(payload),
       )
       .subscribe();
 
@@ -59,7 +60,7 @@ const MessagePage: React.FC = () => {
 
   const fetchRooms = async () => {
     if (!user) return;
-    setLoading(true);
+    setIsLoading(true);
     const { data, error } = await supabase
       .from("message_room")
       .select("*, user1:user1_id(*), user2:user2_id(*)")
@@ -71,7 +72,7 @@ const MessagePage: React.FC = () => {
     } else {
       setRooms(data || []);
     }
-    setLoading(false);
+    setIsLoading(false);
   };
 
   const handleRealtimeUpdate = async (payload: any) => {
@@ -88,11 +89,11 @@ const MessagePage: React.FC = () => {
     } else if (payload.eventType === "UPDATE") {
       setRooms((prev) => {
         const updatedRooms = prev.map((room) =>
-          room.id === payload.new.id ? { ...room, ...payload.new } : room
+          room.id === payload.new.id ? { ...room, ...payload.new } : room,
         );
         return updatedRooms.sort(
           (a, b) =>
-            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
         );
       });
     } else if (payload.eventType === "DELETE") {
@@ -183,94 +184,101 @@ const MessagePage: React.FC = () => {
         </View>
       </View>
 
-      {/* Chat List */}
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {filteredRooms.length > 0 ? (
-          filteredRooms.map((room) => {
-            const otherUser = getOtherUser(room);
-            const unreadCount = getUnreadCount(room);
-            const name = `${otherUser?.first_name} ${otherUser?.last_name}`;
+      {isLoading ? (
+        <View className="flex-1 items-center mt-48">
+          <ActivityIndicator size="large" color="#2c323d" />
+        </View>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {filteredRooms.length > 0 ? (
+            filteredRooms.map((room) => {
+              const otherUser = getOtherUser(room);
+              const unreadCount = getUnreadCount(room);
+              const name = `${otherUser?.first_name} ${otherUser?.last_name}`;
 
-            return (
-              <TouchableOpacity
-                key={room.id}
-                onPress={() => handleChatPress(room)}
-                activeOpacity={0.7}
-                className="flex-row items-center px-4 py-3 border-b border-gray-50"
-              >
-                {/* Avatar */}
-                <View className="relative">
-                  {otherUser?.avatar_url ? (
-                    <Image
-                      source={{ uri: otherUser.avatar_url }}
-                      className="w-14 h-14 rounded-full bg-gray-200"
-                    />
-                  ) : (
-                    <View className="w-14 h-14 rounded-full bg-gray-200 items-center justify-center">
-                      <FontAwesome
-                        name="user-circle-o"
-                        size={42}
-                        color="black"
+              return (
+                <TouchableOpacity
+                  key={room.id}
+                  onPress={() => handleChatPress(room)}
+                  activeOpacity={0.7}
+                  className="flex-row items-center px-4 py-3 border-b border-gray-50"
+                >
+                  {/* Avatar */}
+                  <View className="relative">
+                    {otherUser?.avatar_url ? (
+                      <Image
+                        source={{ uri: otherUser.avatar_url }}
+                        className="w-14 h-14 rounded-full bg-gray-200"
                       />
-                    </View>
-                  )}
-                </View>
-
-                {/* Chat Info */}
-                <View className="flex-1 ml-3">
-                  <View className="flex-row items-center justify-between">
-                    <Text className="text-base font-semibold text-black">
-                      {name}
-                    </Text>
-                    <Text
-                      className={`text-xs ${
-                        unreadCount > 0
-                          ? "text-black font-semibold"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      {room.updated_at ? formatTime(room.updated_at) : ""}
-                    </Text>
-                  </View>
-
-                  {/* Last Message & Unread Count */}
-                  <View className="flex-row items-center justify-between mt-1">
-                    <Text
-                      className={`text-sm flex-1 mr-2 ${
-                        unreadCount > 0
-                          ? "text-black font-medium"
-                          : "text-gray-500"
-                      }`}
-                      numberOfLines={1}
-                    >
-                      {room.last_message_sender_id === user?.id ? "You: " : ""}
-                      {room.last_message || "No messages yet"}
-                    </Text>
-                    {unreadCount > 0 && (
-                      <View className="bg-black rounded-full min-w-5 h-5 items-center justify-center px-1.5">
-                        <Text className="text-white text-xs font-bold">
-                          {unreadCount}
-                        </Text>
+                    ) : (
+                      <View className="w-14 h-14 rounded-full bg-gray-200 items-center justify-center">
+                        <FontAwesome
+                          name="user-circle-o"
+                          size={42}
+                          color="black"
+                        />
                       </View>
                     )}
                   </View>
-                </View>
-              </TouchableOpacity>
-            );
-          })
-        ) : (
-          <View className="flex-1 items-center justify-center py-20">
-            <MaterialIcons
-              name="chat-bubble-outline"
-              size={64}
-              color="#D1D5DB"
-            />
-            <Text className="text-gray-400 text-base mt-4">
-              No conversations found
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+
+                  {/* Chat Info */}
+                  <View className="flex-1 ml-3">
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-base font-semibold text-black">
+                        {name}
+                      </Text>
+                      <Text
+                        className={`text-xs ${
+                          unreadCount > 0
+                            ? "text-black font-semibold"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {room.updated_at ? formatTime(room.updated_at) : ""}
+                      </Text>
+                    </View>
+
+                    {/* Last Message & Unread Count */}
+                    <View className="flex-row items-center justify-between mt-1">
+                      <Text
+                        className={`text-sm flex-1 mr-2 ${
+                          unreadCount > 0
+                            ? "text-black font-medium"
+                            : "text-gray-500"
+                        }`}
+                        numberOfLines={1}
+                      >
+                        {room.last_message_sender_id === user?.id
+                          ? "You: "
+                          : ""}
+                        {room.last_message || "No messages yet"}
+                      </Text>
+                      {unreadCount > 0 && (
+                        <View className="bg-black rounded-full min-w-5 h-5 items-center justify-center px-1.5">
+                          <Text className="text-white text-xs font-bold">
+                            {unreadCount}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <View className="flex-1 items-center justify-center py-20">
+              <MaterialIcons
+                name="chat-bubble-outline"
+                size={64}
+                color="#D1D5DB"
+              />
+              <Text className="text-gray-400 text-base mt-4">
+                No conversations found
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 };

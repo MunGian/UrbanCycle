@@ -16,6 +16,8 @@ import {
   Alert,
   Image,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -38,6 +40,8 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
   onCancelEdit,
 }) => {
   const user = useUserStore((s) => s.user);
+  const setHasOpenedPicker = useUserStore((s) => s.setHasOpenedPicker);
+
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -81,11 +85,12 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
   const filteredCategories = category.filter((cat) => cat !== "All");
 
   const pickImage = async () => {
+    setHasOpenedPicker(true);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
         "Permission required",
-        "Please allow access to your photo library."
+        "Please allow access to your photo library.",
       );
       return;
     }
@@ -94,7 +99,7 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.8,
+      quality: 0.5,
     });
 
     if (!result.canceled) {
@@ -191,7 +196,7 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
     ) {
       Alert.alert(
         "Missing fields",
-        "Please fill in all required fields and add at least one photo."
+        "Please fill in all required fields and add at least one photo.",
       );
       return;
     }
@@ -273,190 +278,192 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
     (isFree || price.trim() !== "");
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <ScrollView
-        className="flex-1 bg-white"
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="p-6">
-          {/* Photo Upload */}
-          <View className="mb-6">
-            <Text className="text-sm font-medium text-gray-700 mb-2">
-              Photos
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <TouchableOpacity
-                onPress={pickImage}
-                className="w-24 h-24 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 items-center justify-center mr-3"
-              >
-                <MaterialIcons name="add-a-photo" size={24} color="#9CA3AF" />
-                <Text className="text-xs text-gray-400 mt-1">Add Photo</Text>
-              </TouchableOpacity>
-              {images.map((uri, index) => (
-                <View key={index} className="relative mr-3">
-                  <Image source={{ uri }} className="w-24 h-24 rounded-xl" />
-                  <TouchableOpacity
-                    onPress={() => removeImage(index)}
-                    className="absolute top-1 right-1 bg-black/50 rounded-full p-1"
-                  >
-                    <MaterialIcons name="close" size={16} color="white" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Title */}
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 mb-2">
-              Title
-            </Text>
-            <View
-              className={`flex flex-row w-full items-center justify-between bg-cardBg rounded-xl px-4 py-1 gap-2 border ${
-                isTitleFocused ? "border-black" : "border-transparent"
-              }`}
-            >
-              <TextInput
-                className="flex-1 text-base text-black"
-                placeholder="What are you listing?"
-                value={title}
-                onChangeText={setTitle}
-                onFocus={() => setIsTitleFocused(true)}
-                onBlur={() => setIsTitleFocused(false)}
-              />
-            </View>
-          </View>
-
-          {/* Category */}
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 mb-2">
-              Category
-            </Text>
-            <TouchableOpacity
-              onPress={onCategoryClicked}
-              className="bg-cardBg rounded-xl px-4 py-4 border border-transparent flex-row justify-between items-center"
-            >
-              <Text
-                className={`ml-1 ${selectedCategory ? "text-black font-medium" : "text-gray-600"}`}
-              >
-                {selectedCategory || "Select Category"}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView
+          className="flex-1 bg-white"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="p-6">
+            <View className="mb-6">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Photos
               </Text>
-              <MaterialIcons name="arrow-drop-down" size={24} color="gray" />
-            </TouchableOpacity>
-          </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <TouchableOpacity
+                  onPress={pickImage}
+                  className="w-24 h-24 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 items-center justify-center mr-3"
+                >
+                  <MaterialIcons name="add-a-photo" size={24} color="#9CA3AF" />
+                  <Text className="text-xs text-gray-400 mt-1">Add Photo</Text>
+                </TouchableOpacity>
+                {images.map((uri, index) => (
+                  <View key={index} className="relative mr-3">
+                    <Image source={{ uri }} className="w-24 h-24 rounded-xl" />
+                    <TouchableOpacity
+                      onPress={() => removeImage(index)}
+                      className="absolute top-1 right-1 bg-black/50 rounded-full p-1"
+                    >
+                      <MaterialIcons name="close" size={16} color="white" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
 
-          {/* Price / Free */}
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 mb-2">
-              Price
-            </Text>
-            <View className="flex-row gap-3">
-              <TouchableOpacity
-                onPress={onPriceClicked}
-                className="flex-1 bg-cardBg rounded-xl px-4 py-4 border border-transparent flex-row justify-between items-center"
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Title
+              </Text>
+              <View
+                className={`flex flex-row w-full items-center justify-between bg-cardBg rounded-xl px-4 py-1 gap-2 border ${
+                  isTitleFocused ? "border-black" : "border-transparent"
+                }`}
               >
-                <Text className={`ml-1 text-black font-medium`}>
-                  {isFree ? "Free" : "Paid"}
+                <TextInput
+                  className="flex-1 text-base text-black"
+                  placeholder="What are you listing?"
+                  value={title}
+                  onChangeText={setTitle}
+                  onFocus={() => setIsTitleFocused(true)}
+                  onBlur={() => setIsTitleFocused(false)}
+                />
+              </View>
+            </View>
+
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Category
+              </Text>
+              <TouchableOpacity
+                onPress={onCategoryClicked}
+                className="bg-cardBg rounded-xl px-4 py-4 border border-transparent flex-row justify-between items-center"
+              >
+                <Text
+                  className={`ml-1 ${selectedCategory ? "text-black font-medium" : "text-gray-600"}`}
+                >
+                  {selectedCategory || "Select Category"}
                 </Text>
                 <MaterialIcons name="arrow-drop-down" size={24} color="gray" />
               </TouchableOpacity>
-              {!isFree && (
-                <View
-                  className={`flex-1 flex-row items-center bg-cardBg rounded-xl px-4 py-1 gap-2 border ${
-                    isPriceFocused ? "border-black" : "border-transparent"
-                  }`}
-                >
-                  <Text className="font-medium text-base text-black">RM</Text>
-                  <TextInput
-                    className="flex-1 text-base text-black"
-                    placeholder="Price"
-                    keyboardType="numeric"
-                    value={price}
-                    onChangeText={handlePriceChange}
-                    onFocus={() => setIsPriceFocused(true)}
-                    onBlur={() => setIsPriceFocused(false)}
-                  />
-                </View>
-              )}
             </View>
-          </View>
 
-          {/* Category */}
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 mb-2">
-              Location
-            </Text>
-            <TouchableOpacity
-              onPress={onLocationClicked}
-              className="bg-cardBg rounded-xl px-4 py-4 border border-transparent flex-row justify-between items-center"
-            >
-              <Text
-                className={`ml-1 ${selectedLocation ? "text-black font-medium" : "text-gray-600"}`}
-              >
-                {selectedLocation || "Select Location"}
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Price
               </Text>
-              <MaterialIcons name="arrow-drop-down" size={24} color="gray" />
-            </TouchableOpacity>
-          </View>
+              <View className="flex-row gap-3">
+                <TouchableOpacity
+                  onPress={onPriceClicked}
+                  className="flex-1 bg-cardBg rounded-xl px-4 py-4 border border-transparent flex-row justify-between items-center"
+                >
+                  <Text className={`ml-1 text-black font-medium`}>
+                    {isFree ? "Free" : "Paid"}
+                  </Text>
+                  <MaterialIcons
+                    name="arrow-drop-down"
+                    size={24}
+                    color="gray"
+                  />
+                </TouchableOpacity>
+                {!isFree && (
+                  <View
+                    className={`flex-1 flex-row items-center bg-cardBg rounded-xl px-4 py-1 gap-2 border ${
+                      isPriceFocused ? "border-black" : "border-transparent"
+                    }`}
+                  >
+                    <Text className="font-medium text-base text-black">RM</Text>
+                    <TextInput
+                      className="flex-1 text-base text-black"
+                      placeholder="Price"
+                      keyboardType="numeric"
+                      value={price}
+                      onChangeText={handlePriceChange}
+                      onFocus={() => setIsPriceFocused(true)}
+                      onBlur={() => setIsPriceFocused(false)}
+                    />
+                  </View>
+                )}
+              </View>
+            </View>
 
-          {/* Description */}
-          <View className="mb-6">
-            <Text className="text-sm font-medium text-gray-700 mb-2">
-              Description
-            </Text>
-            <View
-              className={`flex flex-row w-full items-start justify-between bg-cardBg rounded-xl px-4 py-3 gap-2 border ${
-                isDescriptionFocused ? "border-black" : "border-transparent"
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Location
+              </Text>
+              <TouchableOpacity
+                onPress={onLocationClicked}
+                className="bg-cardBg rounded-xl px-4 py-4 border border-transparent flex-row justify-between items-center"
+              >
+                <Text
+                  className={`ml-1 ${selectedLocation ? "text-black font-medium" : "text-gray-600"}`}
+                >
+                  {selectedLocation || "Select Location"}
+                </Text>
+                <MaterialIcons name="arrow-drop-down" size={24} color="gray" />
+              </TouchableOpacity>
+            </View>
+
+            <View className="mb-6">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Description
+              </Text>
+              <View
+                className={`flex flex-row w-full items-start justify-between bg-cardBg rounded-xl px-4 py-3 gap-2 border ${
+                  isDescriptionFocused ? "border-black" : "border-transparent"
+                }`}
+              >
+                <TextInput
+                  className="flex-1 text-base text-gray-700 h-32"
+                  placeholder="Describe the item..."
+                  multiline
+                  textAlignVertical="top"
+                  value={description}
+                  maxLength={10}
+                  onChangeText={setDescription}
+                  onFocus={() => setIsDescriptionFocused(true)}
+                  onBlur={() => setIsDescriptionFocused(false)}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              onPress={handlePostItem}
+              disabled={loading || !isFormValid}
+              className={`bg-black rounded-full py-4 items-center shadow-lg ${
+                loading || !isFormValid ? "opacity-60" : ""
               }`}
             >
-              <TextInput
-                className="flex-1 text-base text-gray-700 h-32"
-                placeholder="Describe the item..."
-                multiline
-                textAlignVertical="top"
-                value={description}
-                maxLength={10}
-                onChangeText={setDescription}
-                onFocus={() => setIsDescriptionFocused(true)}
-                onBlur={() => setIsDescriptionFocused(false)}
-              />
-            </View>
-          </View>
-
-          {/* Submit Button */}
-          <TouchableOpacity
-            onPress={handlePostItem}
-            disabled={loading || !isFormValid}
-            className={`bg-black rounded-full py-4 items-center shadow-lg ${
-              loading || !isFormValid ? "opacity-50" : ""
-            }`}
-          >
-            <Text className="text-white font-bold text-lg">
-              {loading
-                ? itemToEdit
-                  ? "Updating..."
-                  : "Listing..."
-                : itemToEdit
-                  ? "Update Item"
-                  : "List Item"}
-            </Text>
-          </TouchableOpacity>
-
-          {itemToEdit && onCancelEdit && (
-            <TouchableOpacity
-              onPress={onCancelEdit}
-              className="mt-4 bg-gray-200 rounded-full py-4 items-center shadow-lg"
-            >
-              <Text className="text-black font-bold text-lg">Cancel</Text>
+              <Text className="text-white font-bold text-lg">
+                {loading
+                  ? itemToEdit
+                    ? "Updating..."
+                    : "Listing..."
+                  : itemToEdit
+                    ? "Update Item"
+                    : "List Item"}
+              </Text>
             </TouchableOpacity>
-          )}
 
-          <View
-            className={`${isDescriptionFocused || isPriceFocused ? "h-96" : "h-24"}`}
-          />
-        </View>
-      </ScrollView>
-    </TouchableWithoutFeedback>
+            {itemToEdit && onCancelEdit && (
+              <TouchableOpacity
+                onPress={onCancelEdit}
+                className="mt-4 bg-gray-200 rounded-full py-4 items-center shadow-lg"
+              >
+                <Text className="text-black font-bold text-lg">Cancel</Text>
+              </TouchableOpacity>
+            )}
+
+            <View
+              className={`${isDescriptionFocused || isPriceFocused ? "h-96" : "h-24"}`}
+            />
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 

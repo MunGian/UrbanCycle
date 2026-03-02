@@ -123,7 +123,7 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
     }
   };
 
-  console.log("Listed Items in MyListingsTab:", listedItems);
+  // console.log("Listed Items in MyListingsTab:", listedItems);
 
   return (
     <ScrollView
@@ -214,7 +214,7 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
                   <Text className="text-xs text-gray-400">{item.date}</Text>
                   <Text
                     className={`text-xs font-bold px-2 py-1 rounded-full ${getStatusColor(
-                      item.status
+                      item.status,
                     )}`}
                   >
                     {item.status}

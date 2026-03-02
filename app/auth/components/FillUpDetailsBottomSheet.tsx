@@ -111,9 +111,7 @@ const FillUpDetailsBottomSheet: React.FC = () => {
         disabled={isContinueDisabled}
         className={`flex rounded-full py-4 w-full items-center justify-center ${
           isContinueDisabled
-            ? // ? "bg-orange-400 opacity-50"
-              // : "bg-orange-400 opacity-100"
-              "bg-brandPrimary opacity-50"
+            ? "bg-brandPrimary opacity-50"
             : "bg-brandPrimary opacity-100"
         }`}
       >

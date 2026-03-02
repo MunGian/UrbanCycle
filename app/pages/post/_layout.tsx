@@ -10,6 +10,7 @@ import PostTabs from "./components/PostTabs";
 const PostPage: React.FC = () => {
   const user = useUserStore((s) => s.user);
   const [listedItems, setListedItems] = useState<ListedItem[]>([]);
+  const [isMounting, setIsMounting] = useState<boolean>(true);
 
   useEffect(() => {
     if (user) {
@@ -32,6 +33,7 @@ const PostPage: React.FC = () => {
       images: item.images && item.images.length > 0 ? item.images : "",
     }));
     setListedItems(mappedItems);
+    setIsMounting(false);
   };
 
   const handlePostItem = (newItem: ListedItem) => {
@@ -44,7 +46,7 @@ const PostPage: React.FC = () => {
       }
       return [newItem, ...prevItems];
     });
-    loadItems(); // Reload to get the real data from DB
+    loadItems();
   };
 
   if (!user) {
@@ -53,20 +55,19 @@ const PostPage: React.FC = () => {
 
   return (
     <View className="flex h-full w-full bg-white">
-      {/* Header */}
       <View className="px-6 pt-6 pb-4 bg-white">
         <Text className="text-2xl font-bold text-black">List Items</Text>
-        <Text className="text-gray-500 text-sm mt-1">
+        {/* <Text className="text-gray-500 text-sm mt-1">
           Give your items a second life
-        </Text>
+        </Text> */}
       </View>
 
-      {/* Tabs */}
       <View className="flex-1">
         <PostTabs
           listedItems={listedItems}
           onPostItem={handlePostItem}
           onRefresh={loadItems}
+          isMounting={isMounting}
         />
       </View>
     </View>

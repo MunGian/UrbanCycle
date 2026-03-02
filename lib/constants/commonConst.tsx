@@ -38,6 +38,21 @@ export const penangLocations = [
   "Teluk Kumbar",
 ];
 
+export const wasteTypes = [
+  "General Waste (Non-Recyclable)",
+  "Food Waste",
+  "Plastic (Recyclable)",
+  "Paper & Cardboard",
+  "Glass",
+  "Metal / Aluminium Cans",
+  "E-Waste (Electronics)",
+  "Hazardous / Chemical Waste",
+  "Green / Garden Waste",
+  "Construction & Demolition Debris",
+  "Bulky Items (Furniture, Mattresses)",
+  "Textiles / Clothing",
+];
+
 /**
  * Format a date string or Date object to local time in "YYYY-MM-DD HH:MM" format
  * @param dateInput - Date object or date string

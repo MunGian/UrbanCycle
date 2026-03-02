@@ -1,7 +1,10 @@
 import { MarketplaceItem } from "@/lib/api/apiModel";
+import { penangLocations } from "@/lib/constants/commonConst";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import React, { FC, useMemo } from "react";
+import * as Location from "expo-location";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -104,7 +107,7 @@ const FreeItemsTab: FC<MarketplaceTabsProps> = ({
 }) => {
   const freeItems = useMemo(() => {
     return marketplaceData.filter(
-      (item) => item.listed_item.is_free || item.listed_item.price === 0
+      (item) => item.listed_item.is_free || item.listed_item.price === 0,
     );
   }, [marketplaceData]);
 
@@ -144,25 +147,73 @@ const NearbyTab: FC<MarketplaceTabsProps> = ({
   onRefresh,
   refreshing,
 }) => {
+  const [currentLocation, setCurrentLocation] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const location = await Location.getCurrentPositionAsync({});
+        if (location) {
+          const address = await Location.reverseGeocodeAsync({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+
+          if (address && address.length > 0) {
+            const loc = address[0];
+
+            // Create a search string from all address components to check against our list
+            const fullAddressString = `${loc.name || ""} ${loc.street || ""} ${
+              loc.district || ""
+            } ${loc.city || ""} ${loc.subregion || ""}`.toLowerCase();
+
+            // Try to find if user is in one of our known Penang locations
+            const matchedLocation = penangLocations.find((pl) =>
+              fullAddressString.includes(pl.toLowerCase()),
+            );
+
+            if (matchedLocation) {
+              setCurrentLocation(matchedLocation);
+            } else {
+              // Fallback: use whatever city/district name we got
+              const locName =
+                loc.city ||
+                loc.district ||
+                loc.subregion ||
+                loc.name ||
+                "Unknown Location";
+              setCurrentLocation(locName);
+            }
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        setErrorMsg("Failed to fetch location");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
   const nearbyItems = useMemo(() => {
-    const nearbyLocations = [
-      "Gelugor",
-      "Bayan Lepas",
-      "Ayer Itam",
-      "Jelutong",
-      "Bukit Mertajam",
-      "George Town",
-      "Butterworth",
-      "Tanjung Bungah",
-      "Seberang Jaya",
-      "Bayan Baru",
-      "Balik Pulau",
-      "USM Gelugor",
-    ];
-    return marketplaceData.filter((item) =>
-      nearbyLocations.includes(item.listed_item.location || "")
-    );
-  }, [marketplaceData]);
+    if (!currentLocation) return [];
+
+    const loc = currentLocation.toLowerCase();
+    return marketplaceData.filter((item) => {
+      const itemLocation = (item.listed_item.location || "").toLowerCase();
+      return itemLocation.includes(loc) || loc.includes(itemLocation);
+    });
+  }, [marketplaceData, currentLocation]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -181,13 +232,44 @@ const NearbyTab: FC<MarketplaceTabsProps> = ({
     });
   }, [query, selectedCategory, nearbyItems]);
 
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color="#000000" />
+        <Text className="mt-2 text-gray-500">Finding nearby items...</Text>
+      </View>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white p-4">
+        <Text className="text-red-500 text-center mb-2">{errorMsg}</Text>
+        <Text className="text-gray-500 text-center">
+          Please enable location services to see nearby items.
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <MarketplaceTabContent
-      items={filtered}
-      renderItem={renderItem}
-      onRefresh={onRefresh}
-      refreshing={refreshing}
-    />
+    <View className="flex-1 bg-white">
+      {currentLocation && (
+        <View className="px-4 py-2 bg-gray-50 border-b border-gray-100">
+          <Text className="text-gray-600 text-sm">
+            Showing items near{" "}
+            <Text className="font-bold text-black">{currentLocation}</Text>
+          </Text>
+        </View>
+      )}
+      <MarketplaceTabContent
+        items={filtered}
+        renderItem={renderItem}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
+        emptyMessage={`No items found near ${currentLocation || "you"}.`}
+      />
+    </View>
   );
 };
 

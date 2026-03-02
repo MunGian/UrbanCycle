@@ -1,4 +1,5 @@
 import { AuthPlaceholder } from "@/components/AuthPlaceholder";
+import { SooBottomSheet } from "@/components/SooBottomSheetController";
 import { Route } from "@/lib/utils/routes";
 import { supabase } from "@/lib/utils/supabase";
 import { useUserStore } from "@/lib/zustand/useUserStore";
@@ -7,6 +8,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import EditProfileContent from "./components/EditProfileBottomSheet";
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
@@ -16,11 +18,19 @@ const ProfilePage: React.FC = () => {
     return <AuthPlaceholder />;
   }
 
+  const handleEditProfile = () => {
+    SooBottomSheet.push({
+      title: "Edit Profile",
+      needPadding: true,
+      child: <EditProfileContent />,
+    });
+  };
+
   const menuItems = [
     {
       icon: "person-outline",
       label: "Edit Profile",
-      onPress: () => router.push(Route.LoginPage),
+      onPress: handleEditProfile,
     },
     {
       icon: "list-alt",
@@ -92,7 +102,7 @@ const ProfilePage: React.FC = () => {
                 )}
               </View>
             </View>
-            <TouchableOpacity className="p-2">
+            <TouchableOpacity className="p-2" onPress={handleEditProfile}>
               <MaterialIcons name="edit" size={20} color="#6B7280" />
             </TouchableOpacity>
           </View>

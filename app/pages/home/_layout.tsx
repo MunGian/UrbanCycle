@@ -8,6 +8,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   Keyboard,
@@ -25,7 +26,7 @@ import MarketplaceTabs from "./components/MarketplaceTabs";
 const columnCount = 2;
 const cardWidth = Math.max(
   140,
-  (Dimensions.get("window").width - 48) / columnCount
+  (Dimensions.get("window").width - 48) / columnCount,
 );
 
 const HomePage: React.FC = () => {
@@ -33,6 +34,7 @@ const HomePage: React.FC = () => {
   const router = useRouter();
   const user = useUserStore((s) => s.user);
 
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [query, setQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [marketplaceData, setMarketplaceData] = useState<MarketplaceItem[]>([]);
@@ -43,8 +45,10 @@ const HomePage: React.FC = () => {
   }, [user]);
 
   const loadItems = async () => {
+    setIsLoading(true);
     const items = await fetchMarketplaceItems();
     setMarketplaceData(items);
+    setIsLoading(false);
   };
 
   const onRefresh = async () => {
@@ -201,15 +205,20 @@ const HomePage: React.FC = () => {
           </View>
         </View>
 
-        {/* Marketplace Tabs Component */}
-        <MarketplaceTabs
-          query={query}
-          selectedCategory={selectedCategory}
-          renderItem={renderItem}
-          marketplaceData={marketplaceData}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
-        />
+        {isLoading ? (
+          <View className="flex-1 items-center mt-48">
+            <ActivityIndicator size="large" color="#2c323d" />
+          </View>
+        ) : (
+          <MarketplaceTabs
+            query={query}
+            selectedCategory={selectedCategory}
+            renderItem={renderItem}
+            marketplaceData={marketplaceData}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+          />
+        )}
       </View>
     </TouchableWithoutFeedback>
   );

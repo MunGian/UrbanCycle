@@ -22,7 +22,6 @@ import {
 import MessageBubble from "./components/MessageBubble";
 
 const PAGE_SIZE = 20;
-let hasOpenedPicker = false;
 
 const MessageRoomPage: React.FC = () => {
   const router = useRouter();
@@ -30,6 +29,7 @@ const MessageRoomPage: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const { chatId, name, avatar, itemName, isOnline } = params;
   const user = useUserStore((s) => s.user);
+  const hasOpenedPicker = useUserStore((s) => s.hasOpenedPicker);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState<string>("");
@@ -39,7 +39,7 @@ const MessageRoomPage: React.FC = () => {
   const [isTextInputFocused, setIsTextInputFocused] = useState<boolean>(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [windowHeight, setWindowHeight] = useState(
-    Dimensions.get("window").height
+    Dimensions.get("window").height,
   );
 
   useEffect(() => {
@@ -68,7 +68,7 @@ const MessageRoomPage: React.FC = () => {
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
           }, 500);
-        }
+        },
       )
       .subscribe();
 
@@ -85,20 +85,20 @@ const MessageRoomPage: React.FC = () => {
         setTimeout(() => {
           scrollViewRef.current?.scrollToEnd({ animated: true });
         }, 100);
-      }
+      },
     );
     const keyboardHideListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
         setKeyboardHeight(0);
-      }
+      },
     );
 
     const dimensionListener = Dimensions.addEventListener(
       "change",
       ({ window }) => {
         setWindowHeight(window.height);
-      }
+      },
     );
 
     return () => {
@@ -172,7 +172,7 @@ const MessageRoomPage: React.FC = () => {
 
     if (!result.canceled) {
       await Promise.all(
-        result.assets.map((asset) => sendImageMessage(asset.uri))
+        result.assets.map((asset) => sendImageMessage(asset.uri)),
       );
     }
   };
@@ -282,7 +282,7 @@ const MessageRoomPage: React.FC = () => {
   const bottomPadding =
     Platform.OS === "ios"
       ? keyboardHeight
-      : hasOpenedPicker && !isWindowResized && keyboardHeight > 0
+      : hasOpenedPicker
         ? keyboardHeight
         : 0;
 
