@@ -1,4 +1,4 @@
-import { fetchMarketplaceItems } from "@/lib/api/api";
+import { fetchMarketplaceItems, updateLastViewedCategory } from "@/lib/api/api";
 import { MarketplaceItem } from "@/lib/api/apiModel";
 import { category, formatPrice } from "@/lib/constants/commonConst";
 import { Route } from "@/lib/utils/routes";
@@ -8,7 +8,6 @@ import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   Image,
   Keyboard,
@@ -33,15 +32,19 @@ const HomePage: React.FC = () => {
   const navigation = useNavigation();
   const router = useRouter();
   const user = useUserStore((s) => s.user);
+  const setUser = useUserStore((s) => s.setUser);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const [query, setQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [marketplaceData, setMarketplaceData] = useState<MarketplaceItem[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   useEffect(() => {
-    loadItems();
+    if (user) {
+      loadItems();
+    }
   }, [user]);
 
   const loadItems = async () => {
@@ -85,8 +88,26 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const navigateToItemDetailsPage = (item: MarketplaceItem) => {
+  const updateCategoriesOnView = async (itemCategory: string) => {
+    if (!user) return;
+    try {
+      const newCats = await updateLastViewedCategory(
+        user.id,
+        itemCategory,
+        user.last_categories_viewed || [],
+      );
+      if (
+        JSON.stringify(newCats) !== JSON.stringify(user.last_categories_viewed)
+      ) {
+        setUser({ ...user, last_categories_viewed: newCats });
+      }
+    } catch (e) {
+      console.error("Failed to update categories", e);
+    }
+  };
+  const navigateToItemDetailsPage = async (item: MarketplaceItem) => {
     (navigation as any).navigate("pages/itemDetails", { item });
+    await updateCategoriesOnView(item.listed_item.category);
   };
 
   const renderItem = ({ item }: { item: MarketplaceItem }) => {
@@ -205,20 +226,15 @@ const HomePage: React.FC = () => {
           </View>
         </View>
 
-        {isLoading ? (
-          <View className="flex-1 items-center mt-48">
-            <ActivityIndicator size="large" color="#2c323d" />
-          </View>
-        ) : (
-          <MarketplaceTabs
-            query={query}
-            selectedCategory={selectedCategory}
-            renderItem={renderItem}
-            marketplaceData={marketplaceData}
-            onRefresh={onRefresh}
-            refreshing={refreshing}
-          />
-        )}
+        <MarketplaceTabs
+          query={query}
+          selectedCategory={selectedCategory}
+          renderItem={renderItem}
+          marketplaceData={marketplaceData}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+          isLoading={isLoading}
+        />
       </View>
     </TouchableWithoutFeedback>
   );

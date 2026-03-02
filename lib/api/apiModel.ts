@@ -6,6 +6,8 @@ export interface User {
   avatar_url?: string;
   location?: string;
   bio?: string;
+  last_categories_viewed?: string[];
+  created_at?: Date;
 }
 
 export interface ListedItem {

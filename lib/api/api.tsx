@@ -244,3 +244,30 @@ export const fetchUserReports = async (userId: string): Promise<Report[]> => {
 
   return data as Report[];
 };
+
+export const updateLastViewedCategory = async (
+  userId: string,
+  category: string,
+  currentCategories: string[],
+) => {
+  const newCategories = [...(currentCategories || [])];
+  if (newCategories.includes(category)) {
+    return currentCategories;
+  }
+  newCategories.push(category);
+  if (newCategories.length > 3) {
+    newCategories.shift();
+  }
+
+  const { error } = await supabase
+    .from("user")
+    .update({ last_categories_viewed: newCategories })
+    .eq("id", userId);
+
+  if (error) {
+    console.error("Update categories error:", error);
+    return currentCategories;
+  }
+
+  return newCategories;
+};

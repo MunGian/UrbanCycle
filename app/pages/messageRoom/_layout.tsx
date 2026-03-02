@@ -30,6 +30,7 @@ const MessageRoomPage: React.FC = () => {
   const { chatId, name, avatar, itemName, isOnline } = params;
   const user = useUserStore((s) => s.user);
   const hasOpenedPicker = useUserStore((s) => s.hasOpenedPicker);
+  const setHasOpenedPicker = useUserStore((s) => s.setHasOpenedPicker);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState<string>("");
@@ -162,7 +163,7 @@ const MessageRoomPage: React.FC = () => {
   };
 
   const pickImage = async () => {
-    hasOpenedPicker = true;
+    setHasOpenedPicker(true);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsMultipleSelection: true,
@@ -268,17 +269,6 @@ const MessageRoomPage: React.FC = () => {
   };
 
   const groupedMessages = groupMessages(messages);
-
-  // Calculate if we need manual padding
-  // If window height is significantly smaller than screen height, it means the OS resized the window (adjustResize worked)
-  // If window height is close to screen height, but keyboard is visible, it means adjustResize failed (bug state)
-  const screenHeight = Dimensions.get("screen").height;
-  // Threshold to detect resize (e.g. > 150px difference)
-  const isWindowResized = screenHeight - windowHeight > 150;
-
-  // On iOS, we always use padding (KeyboardAvoidingView behavior).
-  // On Android, we use padding ONLY if the window was NOT resized by the OS.
-  // We also check if the picker was opened, because the resize bug usually only happens after using the picker.
   const bottomPadding =
     Platform.OS === "ios"
       ? keyboardHeight

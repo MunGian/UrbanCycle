@@ -1,5 +1,6 @@
 import { MarketplaceItem } from "@/lib/api/apiModel";
 import { penangLocations } from "@/lib/constants/commonConst";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import * as Location from "expo-location";
 import React, { FC, useEffect, useMemo, useState } from "react";
@@ -21,6 +22,7 @@ interface MarketplaceTabsProps {
   marketplaceData: MarketplaceItem[];
   onRefresh: () => Promise<void>;
   refreshing: boolean;
+  isLoading: boolean;
 }
 
 interface MarketplaceTabContentProps {
@@ -29,6 +31,7 @@ interface MarketplaceTabContentProps {
   emptyMessage?: string;
   onRefresh: () => Promise<void>;
   refreshing: boolean;
+  isLoading?: boolean;
 }
 
 const MarketplaceTabContent: FC<MarketplaceTabContentProps> = ({
@@ -37,7 +40,16 @@ const MarketplaceTabContent: FC<MarketplaceTabContentProps> = ({
   emptyMessage = "No items found.",
   onRefresh,
   refreshing,
+  isLoading = false,
 }) => {
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color="#2c323d" />
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       className="flex-1 bg-white"
@@ -69,6 +81,7 @@ const AllItemsTab: FC<MarketplaceTabsProps> = ({
   renderItem,
   onRefresh,
   refreshing,
+  isLoading,
 }) => {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -93,6 +106,7 @@ const AllItemsTab: FC<MarketplaceTabsProps> = ({
       renderItem={renderItem}
       onRefresh={onRefresh}
       refreshing={refreshing}
+      isLoading={isLoading}
     />
   );
 };
@@ -281,10 +295,22 @@ const ForMeTab: FC<MarketplaceTabsProps> = ({
   onRefresh,
   refreshing,
 }) => {
+  const user = useUserStore((s) => s.user);
+
   const forMeItems = useMemo(() => {
+    if (
+      user?.last_categories_viewed &&
+      user.last_categories_viewed.length > 0
+    ) {
+      const categories = user.last_categories_viewed;
+      return marketplaceData.filter((item) =>
+        categories.includes(item.listed_item.category),
+      );
+    }
+
     const shuffled = [...marketplaceData].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, Math.ceil(marketplaceData.length * 0.7));
-  }, [marketplaceData]);
+  }, [marketplaceData, user?.last_categories_viewed]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -309,6 +335,11 @@ const ForMeTab: FC<MarketplaceTabsProps> = ({
       renderItem={renderItem}
       onRefresh={onRefresh}
       refreshing={refreshing}
+      emptyMessage={
+        user?.last_categories_viewed && user.last_categories_viewed.length > 0
+          ? "No items found for you based on your recent views."
+          : "No items found."
+      }
     />
   );
 };
@@ -333,6 +364,7 @@ const MarketplaceTabs: FC<MarketplaceTabsProps> = (props) => {
         tabBarInactiveTintColor: "#9CA3AF",
         animationEnabled: true,
         tabBarScrollEnabled: true,
+        lazy: false,
       }}
     >
       <Tab.Screen name="AllItems" options={{ title: "All Items" }}>

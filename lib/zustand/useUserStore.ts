@@ -14,7 +14,6 @@ export const useUserStore = create<UserState>((set) => ({
   user: null,
   loading: true,
   hasOpenedPicker: false,
-
   setUser: (user) => set({ user, loading: false }),
   clearUser: () => set({ user: null, loading: false }),
   setHasOpenedPicker: (opened) => set({ hasOpenedPicker: opened }),
