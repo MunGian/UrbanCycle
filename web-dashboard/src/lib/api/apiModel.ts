@@ -7,6 +7,7 @@ export interface User {
   location?: string;
   bio?: string;
   last_categories_viewed?: string[];
+  role?: string;
   created_at?: Date;
 }
 
@@ -23,4 +24,5 @@ export interface Report {
   created_at: string;
   updated_at?: string;
   images?: string[];
+  resolved_by?: string;
 }

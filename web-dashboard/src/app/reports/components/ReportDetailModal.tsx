@@ -154,14 +154,16 @@ export function ReportDetailModal({
               "en-GB",
             )}
           </div>
-          <div className="flex gap-3 ml-auto w-full sm:w-auto">
-            <StatusSelect
-              currentStatus={report.status}
-              onStatusUpdate={(newStatus) =>
-                onStatusUpdate(report.id, newStatus)
-              }
-            />
-          </div>
+          {report.status !== "Resolved" && (
+            <div className="flex gap-3 ml-auto w-full sm:w-auto">
+              <StatusSelect
+                currentStatus={report.status}
+                onStatusUpdate={(newStatus) =>
+                  onStatusUpdate(report.id, newStatus)
+                }
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

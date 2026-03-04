@@ -15,7 +15,7 @@ const ReportMapElement = dynamic(() => import("./components/ReportMap"), {
 export default function MapViewPage() {
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="flex-1 min-h-0 relative">
+      <div className="flex-1 min-h-0 relative z-50">
         <ReportMapElement />
       </div>
     </div>

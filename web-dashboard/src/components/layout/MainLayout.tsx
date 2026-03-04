@@ -6,10 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { Loader2 } from "lucide-react";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const setUser = useUserStore((state) => state.setUser);
+
   const [sessionChecked, setSessionChecked] = useState(false);
   const supabase = createClient();
 
@@ -19,9 +22,30 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (!session && pathname !== "/login") {
+      if (!session) {
+        if (pathname !== "/login") {
+          router.replace("/login");
+        } else {
+          setSessionChecked(true);
+        }
+        return;
+      }
+
+      // Verify user role
+      const { data: userProfile, error } = await supabase
+        .from("user")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error || userProfile?.role !== "admin") {
+        await supabase.auth.signOut();
         router.replace("/login");
-      } else if (session && pathname === "/login") {
+        return;
+      }
+
+      setUser(userProfile);
+      if (pathname === "/login") {
         router.replace("/");
       } else {
         setSessionChecked(true);

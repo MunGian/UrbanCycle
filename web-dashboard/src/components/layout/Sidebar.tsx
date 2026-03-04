@@ -5,21 +5,29 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, FileText, Users, LogOut, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export const navigation = [
   { name: "Overview", href: "/", icon: LayoutDashboard },
   { name: "Reports", href: "/reports", icon: FileText },
   { name: "Map View", href: "/map-view", icon: Map },
-  { name: "Profile", href: "/profile", icon: Users },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
 
   const isActive = (href: string) => {
     if (href === "/" && pathname === "/") return true;
     if (href !== "/" && pathname.startsWith(href)) return true;
     return false;
+  };
+
+  const onSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
   };
 
   return (
@@ -67,13 +75,13 @@ export function Sidebar() {
       </div>
 
       <div className="mt-auto p-4 border-t border-gray-100 mb-4 mx-3">
-        <Link
-          href="/login"
-          className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-500 hover:text-red-600 rounded-xl hover:bg-red-50 transition-all group"
+        <div
+          className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-500 hover:text-red-600 rounded-xl hover:bg-red-50 transition-all group hover:shadow-sm cursor-pointer"
+          onClick={onSignOut}
         >
           <LogOut className="h-5 w-5 text-gray-400 group-hover:text-red-500 transition-colors" />
           Sign Out
-        </Link>
+        </div>
       </div>
     </aside>
   );

@@ -7,8 +7,11 @@ import { cn } from "@/lib/utils";
 import { Loader2, Lock, Mail, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 
 export default function LoginPage() {
+  const setUser = useUserStore((state) => state.setUser);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +50,10 @@ export default function LoginPage() {
     setMessage(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -55,6 +61,25 @@ export default function LoginPage() {
       if (error) {
         setMessage({ text: error.message, type: "error" });
         return;
+      }
+
+      if (user) {
+        const { data: userProfile, error: profileError } = await supabase
+          .from("user")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        if (profileError || userProfile?.role !== "admin") {
+          await supabase.auth.signOut();
+          setMessage({
+            text: "Access denied. Only municipal officers can access this dashboard.",
+            type: "error",
+          });
+          return;
+        } else {
+          setUser(userProfile);
+        }
       }
 
       router.refresh();
@@ -67,7 +92,6 @@ export default function LoginPage() {
   };
 
   const handleSignUp = async () => {
-    // Optional: Redirect to signup or handle it
     setMessage({
       text: "Sign up is currently restricted to administrators.",
       type: "error",
@@ -105,8 +129,8 @@ export default function LoginPage() {
           </h1>
 
           <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-            A comprehensive dashboard for monitoring reports, assigning tasks,
-            and analyzing waste management data in real-time.
+            A comprehensive dashboard for monitoring reports, and analyzing
+            waste management data in real-time.
           </p>
 
           <div className="space-y-4">
@@ -269,8 +293,8 @@ export default function LoginPage() {
                   type="submit"
                   disabled={loading}
                   className={cn(
-                    "group relative inline-flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-gray-900 px-8 py-3 font-medium text-white transition-all duration-300 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 disabled:opacity-50 disabled:hover:bg-gray-900",
-                    "shadow-lg shadow-gray-900/20 hover:shadow-emerald-600/30",
+                    "group relative inline-flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-gray-900 px-8 py-3 font-medium text-white transition-all duration-300 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50 disabled:hover:bg-gray-900",
+                    "shadow-lg shadow-gray-900/20 hover:shadow-gray-600/30",
                   )}
                 >
                   <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-disabled:opacity-100">
