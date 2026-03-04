@@ -1,4 +1,5 @@
 import CategoryBottomSheet from "@/app/pages/home/components/CategoryBottomSheet";
+import SuccessModal from "@/components/SuccessModal";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
 import { submitReport, uploadReportImage } from "@/lib/api/api";
 import { Report } from "@/lib/api/apiModel";
@@ -60,13 +61,26 @@ const SubmitReportTab: React.FC = () => {
 
       await submitReport(reportData);
 
-      Alert.alert("Success", "Report submitted successfully!");
-      // Reset form
-      setLocation("");
-      setDescription("");
-      setSelectedType("");
-      setCoordinate(undefined);
-      setImages([]);
+      SooBottomSheet.push({
+        title: "",
+        needPadding: false,
+        isDismissible: false,
+        needCloseButton: false,
+        child: (
+          <SuccessModal
+            title="Report Submitted!"
+            description="Thank you for helping us keep the city clean. Your report has been successfully submitted and will be reviewed shortly."
+            onClose={() => {
+              setLocation("");
+              setDescription("");
+              setSelectedType("");
+              setCoordinate(undefined);
+              setImages([]);
+              SooBottomSheet.pop();
+            }}
+          />
+        ),
+      });
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "Failed to submit report. Please try again.");
@@ -108,7 +122,7 @@ const SubmitReportTab: React.FC = () => {
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.5,
+      quality: 0.8,
     });
 
     if (!result.canceled) {

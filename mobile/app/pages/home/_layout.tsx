@@ -199,7 +199,7 @@ const HomePage: React.FC = () => {
               <Text className="text-3xl font-bold text-black">
                 {user
                   ? user?.first_name
-                    ? user.first_name + " " + user.last_name
+                    ? user?.first_name + " " + user?.last_name
                     : "Friend"
                   : "Guest"}
               </Text>
