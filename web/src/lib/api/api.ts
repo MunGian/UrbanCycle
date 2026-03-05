@@ -21,11 +21,12 @@ export const getReports = async () => {
   export const onReportStatusUpdate = async (
     id: string,
     newStatus: "Pending" | "In Progress" | "Resolved",
+    officer: string,
   ) => {
     try {
       const { error } = await supabase
         .from("reports")
-        .update({ status: newStatus })
+        .update({ status: newStatus, resolved_by: officer })
         .eq("id", id);
 
       if (error) throw error;

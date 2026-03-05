@@ -9,6 +9,7 @@ export interface User {
   last_categories_viewed?: string[];
   role?: string;
   created_at?: Date;
+  department?: string;
 }
 
 export interface Report {

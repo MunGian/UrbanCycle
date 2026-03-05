@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Bell,
-  Search,
-  User,
-  Menu,
-  LogOut,
-  KeyRound,
-  UserCog,
-} from "lucide-react";
+import { User, Menu, LogOut, KeyRound, UserCog } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -134,21 +126,18 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white" />
-          </button>
-
-          <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block" />
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-3 pl-2 hover:bg-gray-50 rounded-lg p-1 transition-colors outline-none cursor-pointer">
-                <div className="text-right hidden sm:block">
+                <div className="text-right sm:block">
                   <p className="text-sm font-medium text-gray-900 leading-none">
                     {displayName}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Sanitation Dept.</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {user?.department
+                      ? user.department + " Dept."
+                      : "Sanitization Dept."}
+                  </p>
                 </div>
                 <div className="h-10 w-10 relative bg-emerald-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm overflow-hidden">
                   {user?.avatar_url ? (

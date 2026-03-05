@@ -28,12 +28,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useReportStore } from "@/lib/zustand/useReportStore";
 import { onReportStatusUpdate } from "@/lib/api/api";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 
 interface ReportsPageClientProps {
   initialReports: Report[];
 }
 
 export function ReportsPageClient({ initialReports }: ReportsPageClientProps) {
+  const user = useUserStore((state) => state.user);
   const reports = useReportStore((state) => state.reports);
   const setReports = useReportStore((state) => state.setReports);
 
@@ -58,12 +60,22 @@ export function ReportsPageClient({ initialReports }: ReportsPageClientProps) {
   ) => {
     setIsLoading(true);
     try {
-      await onReportStatusUpdate(id, newStatus);
+      const officer =
+        user?.first_name && user?.last_name
+          ? `${user.first_name} ${user.last_name}`
+          : "Admin Officer";
+      await onReportStatusUpdate(id, newStatus, officer);
       setReports(
-        reports.map((r) => (r.id === id ? { ...r, status: newStatus } : r)),
+        reports.map((r) =>
+          r.id === id ? { ...r, status: newStatus, resolved_by: officer } : r,
+        ),
       );
       if (selectedReport && selectedReport.id === id) {
-        setSelectedReport({ ...selectedReport, status: newStatus });
+        setSelectedReport({
+          ...selectedReport,
+          status: newStatus,
+          resolved_by: officer,
+        });
       }
     } catch (error) {
       console.error("Error updating status:", error);

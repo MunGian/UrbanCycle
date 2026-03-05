@@ -14,7 +14,7 @@ export function ReportsList({ reports, onSelectReport }: ReportsListProps) {
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50/80 text-gray-500 font-semibold border-b border-gray-200 uppercase tracking-wider text-xs">
             <tr>
-              <th className="px-6 py-4 w-[120px]">Status</th>
+              <th className="px-6 py-4 w-[150px]">Status</th>
               <th className="px-6 py-4 w-[80px]">Image</th>
               <th className="px-6 py-4 w-[250px]">Type</th>
               <th className="px-6 py-4">Description</th>

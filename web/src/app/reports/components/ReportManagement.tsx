@@ -9,12 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Calendar, Filter, ChevronRight } from "lucide-react";
 import { onReportStatusUpdate } from "@/lib/api/api";
 import { useReportStore } from "@/lib/zustand/useReportStore";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 
 interface ReportManagementProps {
   initialReports: Report[];
 }
 
 export function ReportManagement({ initialReports }: ReportManagementProps) {
+  const user = useUserStore((state) => state.user);
   const reports = useReportStore((state) => state.reports);
   const setReports = useReportStore((state) => state.setReports);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -28,12 +30,22 @@ export function ReportManagement({ initialReports }: ReportManagementProps) {
   ) => {
     setIsLoading(true);
     try {
-      await onReportStatusUpdate(id, newStatus);
+      const officer =
+        user?.first_name && user?.last_name
+          ? `${user.first_name} ${user.last_name}`
+          : "Admin Officer";
+      await onReportStatusUpdate(id, newStatus, officer);
       setReports(
-        reports.map((r) => (r.id === id ? { ...r, status: newStatus } : r)),
+        reports.map((r) =>
+          r.id === id ? { ...r, status: newStatus, resolved_by: officer } : r,
+        ),
       );
       if (selectedReport && selectedReport.id === id) {
-        setSelectedReport({ ...selectedReport, status: newStatus });
+        setSelectedReport({
+          ...selectedReport,
+          status: newStatus,
+          resolved_by: officer,
+        });
       }
     } catch (error) {
       console.error("Error updating status:", error);

@@ -105,16 +105,30 @@ export function ReportDetailModal({
                   <p className="text-xs font-medium text-gray-500 tracking-wider mb-0.5">
                     Reported By
                   </p>
-                  <p className="text-xs md:text-sm font-medium text-gray-800 truncate">
+                  <p className="text-sm md:text-sm font-medium text-gray-800 truncate">
                     Name:{" "}
                     {report.user.first_name + " " + report.user.last_name ||
                       "User"}
                   </p>
-                  <p className="text-xs md:text-sm font-medium text-gray-800">
+                  <p className="text-sm md:text-sm font-medium text-gray-800">
                     ID: {report.user_id}
                   </p>
                 </div>
               </div>
+
+              {/* Resolved By Info */}
+              {report.resolved_by && (
+                <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex items-center gap-4 hover:border-green-100 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-500 tracking-wider mb-0.5">
+                      Resolved By
+                    </p>
+                    <p className="text-sm md:text-sm font-medium text-gray-800 truncate">
+                      Officer&apos;s Name: {report.resolved_by}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Description Box */}
               <div className="space-y-2">
