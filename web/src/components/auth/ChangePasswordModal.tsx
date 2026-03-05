@@ -14,6 +14,7 @@ export function ChangePasswordModal({
   open,
   onOpenChange,
 }: ChangePasswordModalProps) {
+  const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,6 +48,27 @@ export function ChangePasswordModal({
     }
 
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user || !user.email) {
+        setMessage({ text: "User not found", type: "error" });
+        setLoading(false);
+        return;
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        setMessage({ text: "Incorrect current password", type: "error" });
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: password,
       });
@@ -59,6 +81,7 @@ export function ChangePasswordModal({
           type: "success",
         });
         setTimeout(() => {
+          setCurrentPassword("");
           setPassword("");
           setConfirmPassword("");
           setMessage(null);
@@ -93,6 +116,23 @@ export function ChangePasswordModal({
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 block">
+                Current Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm"
+                  placeholder="Enter current password"
+                  required
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 block">
                 New Password
