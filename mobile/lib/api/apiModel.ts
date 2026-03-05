@@ -8,6 +8,7 @@ export interface User {
   bio?: string;
   last_categories_viewed?: string[];
   created_at?: Date;
+  role?: string;
 }
 
 export interface ListedItem {

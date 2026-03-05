@@ -1,3 +1,5 @@
+import AlertModal from "@/components/AlertModal";
+import { SooBottomSheet } from "@/components/SooBottomSheetController";
 import { fetchUserProfile } from "@/lib/api/api";
 import { Route } from "@/lib/utils/routes";
 import { supabase } from "@/lib/utils/supabase";
@@ -8,6 +10,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Keyboard,
@@ -54,8 +57,6 @@ const Login: React.FC = () => {
       Alert.alert("Missing Info", "Please enter both email and password.");
       return;
     }
-
-    console.log("Attempting login with:", email);
     setLoading(true);
 
     try {
@@ -75,13 +76,38 @@ const Login: React.FC = () => {
         console.log("User ID:", data.user.id);
         console.log("Session:", data.session);
 
-        // Fetch user profile and update Zustand store
         const profile = await fetchUserProfile(data.user.id);
+
+        // Check if user is an admin - if so, deny access to mobile app
+        if (profile?.role === "admin") {
+          await supabase.auth.signOut();
+          // Alert.alert(
+          //   "Access Denied",
+          //   "Administrative accounts cannot be used on the mobile application. Please use the web dashboard.",
+          // );
+          SooBottomSheet.push({
+            title: "",
+            needPadding: false,
+            isDismissible: false,
+            needCloseButton: false,
+            child: (
+              <AlertModal
+                title="Access Denied"
+                description="Administrative accounts cannot be used on the mobile application. Please use the web dashboard."
+                status="failed"
+                onClose={() => {
+                  SooBottomSheet.pop();
+                }}
+              />
+            ),
+          });
+          return;
+        }
+
         if (profile) {
           useUserStore.getState().setUser(profile);
         }
 
-        // Redirect to Home page (replace to avoid back button returning to login)
         router.replace(Route.HomePage);
       }
     } catch (err) {
@@ -107,7 +133,6 @@ const Login: React.FC = () => {
     return regex.test(email);
   };
 
-  // Validation function
   const validatePassword = (password: string) => {
     const strongPasswordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -134,9 +159,7 @@ const Login: React.FC = () => {
           </TouchableOpacity>
           <Text className="pl-5 text-xl font-semibold">UrbanCycle Login</Text>
           <TouchableOpacity onPress={() => router.push(Route.SignUpPage)}>
-            <Text className="text-brandPrimary text-lg font-medium">
-              Sign Up
-            </Text>
+            <Text className="text-zinc-700 text-lg font-medium">Sign Up</Text>
           </TouchableOpacity>
         </View>
         <View className="h-8" />
@@ -203,14 +226,14 @@ const Login: React.FC = () => {
           onPress={logInWithEmail}
           disabled={isLoginDisabled}
           className={`flex rounded-full py-4 w-full items-center justify-center ${
-            isLoginDisabled
-              ? // ? "bg-orange-400 opacity-50"
-                // : "bg-orange-400 opacity-100"
-                "bg-brandPrimary opacity-50"
-              : "bg-brandPrimary opacity-100"
+            isLoginDisabled ? "bg-black opacity-50" : "bg-black opacity-100"
           }`}
         >
-          <Text className="text-black text-lg font-medium">Login Now</Text>
+          {loading ? (
+            <ActivityIndicator className="h-8 w-8" size="large" color="#fff" />
+          ) : (
+            <Text className="text-white text-lg font-medium">Login Now</Text>
+          )}
         </TouchableOpacity>
         <View className="h-8" />
         <View className="flex flex-row items-center w-full">

@@ -28,9 +28,9 @@ export const AuthPlaceholder = () => {
       <View className="flex-row w-full gap-4">
         <TouchableOpacity
           onPress={() => router.push(Route.LoginPage)}
-          className="flex-1 bg-brandPrimary py-4 rounded-full items-center justify-center shadow-sm"
+          className="flex-1 bg-black py-4 rounded-full items-center justify-center shadow-sm"
         >
-          <Text className="text-black font-bold text-lg">Log In</Text>
+          <Text className="text-white font-bold text-lg">Log In</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

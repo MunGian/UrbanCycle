@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
+import AlertModal from "@/components/AlertModal";
 
 const { height: screenHeight } = Dimensions.get("window");
 
@@ -83,7 +84,25 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
       //   emailRedirectTo: redirectUrl,
       // },
     });
-
+    if (error) {
+      SooBottomSheet.push({
+        title: "",
+        needPadding: false,
+        isDismissible: false,
+        needCloseButton: false,
+        child: (
+          <AlertModal
+            title="Sign Up Failed"
+            description={error.message}
+            status="failed"
+            onClose={() => {
+              SooBottomSheet.popAll();
+            }}
+          />
+        ),
+      });
+      return;
+    }
     // Insert into User Table in DB
     if (user) {
       const { data: profile } = await supabase
@@ -97,7 +116,6 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
 
     console.log("Sign up response:", { user, session, error });
     SooBottomSheet.popAll();
-    router.replace(Route.HomePage);
 
     // if (session) {
     //   // This block handles cases where email confirmation is OFF.
@@ -156,7 +174,7 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
 
   const inputPaddingY = React.useMemo(
     () => (Platform.OS === "ios" ? "py-4" : "py-1"),
-    []
+    [],
   );
 
   const isLoginDisabled = password.length === 0 || !isPasswordValid || loading;
@@ -201,20 +219,20 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
           <View className="mt-2">
             {passwordRuleItem(
               passwordRules.hasLower,
-              "Must include a lowercase letter"
+              "Must include a lowercase letter",
             )}
             {passwordRuleItem(
               passwordRules.hasUpper,
-              "Must include an uppercase letter"
+              "Must include an uppercase letter",
             )}
             {passwordRuleItem(passwordRules.hasNumber, "Must include a number")}
             {passwordRuleItem(
               passwordRules.hasSpecial,
-              "Must include a symbol"
+              "Must include a symbol",
             )}
             {passwordRuleItem(
               passwordRules.hasLength,
-              "Must be at least 6 characters long"
+              "Must be at least 6 characters long",
             )}
           </View>
         )}
@@ -236,12 +254,10 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
           onPress={onContinuePress}
           disabled={isLoginDisabled}
           className={`flex rounded-full py-4 w-full items-center justify-center ${
-            isLoginDisabled
-              ? "bg-brandPrimary opacity-50"
-              : "bg-brandPrimary opacity-100"
+            isLoginDisabled ? "bg-black opacity-50" : "bg-black opacity-100"
           }`}
         >
-          <Text className="text-black text-lg font-medium">
+          <Text className="text-white text-lg font-medium">
             {loading ? "Loading..." : "Next"}
           </Text>
         </TouchableOpacity>

@@ -6,7 +6,6 @@ import { useEffect } from "react";
 import { SooBottomSheet } from "./SooBottomSheetController";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const user = useUserStore((s) => s.user);
   const setUser = useUserStore((s) => s.setUser);
   const clearUser = useUserStore((s) => s.clearUser);
   const onUserNameEmpty = () => {
@@ -18,7 +17,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isDismissible: false,
         child: <FillUpDetailsBottomSheet />,
       });
-    }, 1200);
+    }, 2000);
   };
 
   useEffect(() => {

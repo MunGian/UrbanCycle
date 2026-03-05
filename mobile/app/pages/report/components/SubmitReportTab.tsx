@@ -1,5 +1,4 @@
 import CategoryBottomSheet from "@/app/pages/home/components/CategoryBottomSheet";
-import SuccessModal from "@/components/SuccessModal";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
 import { submitReport, uploadReportImage } from "@/lib/api/api";
 import { Report } from "@/lib/api/apiModel";
@@ -20,6 +19,7 @@ import {
   View,
 } from "react-native";
 import MapBottomSheet from "./MapBottomSheet";
+import AlertModal from "@/components/AlertModal";
 
 const SubmitReportTab: React.FC = () => {
   const user = useUserStore((s) => s.user);
@@ -67,9 +67,10 @@ const SubmitReportTab: React.FC = () => {
         isDismissible: false,
         needCloseButton: false,
         child: (
-          <SuccessModal
+          <AlertModal
             title="Report Submitted!"
             description="Thank you for helping us keep the city clean. Your report has been successfully submitted and will be reviewed shortly."
+            status="success"
             onClose={() => {
               setLocation("");
               setDescription("");

@@ -40,7 +40,7 @@ const SignUpEmailBottomSheet: React.FC = () => {
 
   const inputPaddingY = React.useMemo(
     () => (Platform.OS === "ios" ? "py-4" : "py-1"),
-    []
+    [],
   );
 
   const isLoginDisabled = email.length === 0 || !isEmailValid;
@@ -102,14 +102,10 @@ const SignUpEmailBottomSheet: React.FC = () => {
         onPress={onContinuePress}
         disabled={isLoginDisabled}
         className={`flex rounded-full py-4 w-full items-center justify-center ${
-          isLoginDisabled
-            ? // ? "bg-orange-400 opacity-50"
-              // : "bg-orange-400 opacity-100"
-              "bg-brandPrimary opacity-50"
-            : "bg-brandPrimary opacity-100"
+          isLoginDisabled ? "bg-black opacity-50" : "bg-black opacity-100"
         }`}
       >
-        <Text className="text-black text-lg font-medium">Next</Text>
+        <Text className="text-white text-lg font-medium">Next</Text>
       </TouchableOpacity>
       <View
         className="h-12"

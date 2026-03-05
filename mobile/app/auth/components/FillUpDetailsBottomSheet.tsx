@@ -30,6 +30,8 @@ const FillUpDetailsBottomSheet: React.FC = () => {
   const onOpenAvatarBottomSheet = () => {
     SooBottomSheet.push({
       title: "Upload your avatar",
+      isDismissible: false,
+      needCloseButton: false,
       needPadding: true,
       child: <FillUpAvatarBottomSheet />,
     });
@@ -37,7 +39,7 @@ const FillUpDetailsBottomSheet: React.FC = () => {
 
   const inputPaddingY = React.useMemo(
     () => (Platform.OS === "ios" ? "py-4" : "py-1"),
-    []
+    [],
   );
 
   const isContinueDisabled = firstName.length === 0 || lastName.length === 0;
@@ -110,12 +112,10 @@ const FillUpDetailsBottomSheet: React.FC = () => {
         onPress={onContinuePress}
         disabled={isContinueDisabled}
         className={`flex rounded-full py-4 w-full items-center justify-center ${
-          isContinueDisabled
-            ? "bg-brandPrimary opacity-50"
-            : "bg-brandPrimary opacity-100"
+          isContinueDisabled ? "bg-black opacity-50" : "bg-black opacity-100"
         }`}
       >
-        <Text className="text-black text-lg font-medium">Next</Text>
+        <Text className="text-white text-lg font-medium">Next</Text>
       </TouchableOpacity>
       <View className="h-12" />
     </View>

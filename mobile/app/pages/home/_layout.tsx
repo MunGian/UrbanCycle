@@ -42,9 +42,7 @@ const HomePage: React.FC = () => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   useEffect(() => {
-    if (user) {
-      loadItems();
-    }
+    loadItems();
   }, [user]);
 
   const loadItems = async () => {

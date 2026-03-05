@@ -6,8 +6,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Route } from "@/lib/utils/routes";
 
 const FillUpAvatarBottomSheet: React.FC = () => {
+  const router = useRouter();
   const setUser = useUserStore((s) => s.setUser);
 
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
@@ -19,7 +22,7 @@ const FillUpAvatarBottomSheet: React.FC = () => {
     if (status !== "granted") {
       Alert.alert(
         "Permission required",
-        "Please allow access to your photo library."
+        "Please allow access to your photo library.",
       );
       return;
     }
@@ -87,6 +90,7 @@ const FillUpAvatarBottomSheet: React.FC = () => {
     const profile = await fetchUserProfile(user.id);
     setUser(profile);
     SooBottomSheet.popAll();
+    router.push(Route.HomePage);
   };
 
   return (
@@ -118,16 +122,17 @@ const FillUpAvatarBottomSheet: React.FC = () => {
         )}
       </TouchableOpacity>
 
-      {/* Save button */}
       <TouchableOpacity
         onPress={onSaveAvatar}
         disabled={uploading || !avatarUri}
         className={`mt-8 w-full py-4 rounded-full items-center ${
-          uploading || !avatarUri ? "bg-gray-300" : "bg-brandPrimary"
+          uploading || !avatarUri
+            ? "bg-black opacity-50"
+            : "bg-black opacity-100"
         }`}
       >
         <Text
-          className={`text-lg font-medium ${uploading ? "text-gray-700" : "text-black"}`}
+          className={`text-lg font-medium ${uploading ? "text-white" : "text-white"}`}
         >
           {uploading ? "Uploading..." : "Save"}
         </Text>
