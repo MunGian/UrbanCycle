@@ -7,7 +7,8 @@ This is a Next.js dashboard for municipal officers to manage reports and view an
 1.  Navigate to this folder:
 
     ```bash
-    cd web-dashboard
+    cd web
+
     ```
 
 2.  Install dependencies (if not already done):
