@@ -2,7 +2,7 @@ import { User } from "@/lib/api/apiModel";
 import { create } from "zustand";
 
 interface UserState {
-  user: User | null;
+  user: User | null | undefined;
   loading: boolean;
   hasOpenedPicker?: boolean;
   setUser: (user: User | null) => void;
@@ -11,7 +11,7 @@ interface UserState {
 }
 
 export const useUserStore = create<UserState>((set) => ({
-  user: null,
+  user: undefined,
   loading: true,
   hasOpenedPicker: false,
   setUser: (user) => set({ user, loading: false }),
