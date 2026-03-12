@@ -123,8 +123,6 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
     }
   };
 
-  // console.log("Listed Items in MyListingsTab:", listedItems);
-
   return (
     <ScrollView
       className="flex-1 bg-white"
@@ -140,7 +138,6 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
               key={item.id}
               className="bg-white border border-gray-100 rounded-2xl p-4 mb-4 shadow-sm flex-row"
             >
-              {/* Item Image */}
               <View className="w-28 h-28 bg-gray-100 rounded-xl mr-4 overflow-hidden">
                 {item.images ? (
                   <Image
@@ -159,7 +156,6 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
                 )}
               </View>
 
-              {/* Item Details */}
               <View className="flex-1 justify-between py-1">
                 <View>
                   <View className="flex-row justify-between items-start">

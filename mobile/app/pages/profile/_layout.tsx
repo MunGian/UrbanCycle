@@ -33,6 +33,16 @@ const ProfilePage: React.FC = () => {
       onPress: handleEditProfile,
     },
     {
+      icon: "inbox",
+      label: "Incoming Requests",
+      onPress: () => router.push("/pages/transactions/sales"),
+    },
+    {
+      icon: "send",
+      label: "My Requests",
+      onPress: () => router.push("/pages/transactions/purchases"),
+    },
+    {
       icon: "list-alt",
       label: "My Listings",
       onPress: () => console.log("My Listings"),

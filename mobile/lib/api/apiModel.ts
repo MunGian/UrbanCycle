@@ -83,3 +83,15 @@ export interface Message {
   content: string;
   created_at: string;
 }
+
+export interface TransactionRequest {
+  id: string;
+  buyer_id: string;
+  seller_id: string;
+  item_id: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  item?: ListedItem;
+  buyer?: User;
+  seller?: User;
+}

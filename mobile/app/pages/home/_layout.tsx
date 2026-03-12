@@ -87,6 +87,15 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const navigateToReservationPage = () => {
+    Keyboard.dismiss();
+    if (user) {
+      router.push("/pages/transactions/purchases");
+    } else {
+      router.push(Route.LoginPage);
+    }
+  };
+
   const updateCategoriesOnView = async (itemCategory: string) => {
     if (!user) return;
     try {
@@ -202,8 +211,14 @@ const HomePage: React.FC = () => {
                   : "Guest"}
               </Text>
             </View>
-            <TouchableOpacity onPress={navigateToCartPage} className="p-2">
+            <TouchableOpacity onPress={navigateToCartPage} className="p-2 mr-1">
               <MaterialIcons name="shopping-cart" size={28} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={navigateToReservationPage}
+              className="p-2"
+            >
+              <MaterialIcons name="send" size={28} color="black" />
             </TouchableOpacity>
           </View>
 

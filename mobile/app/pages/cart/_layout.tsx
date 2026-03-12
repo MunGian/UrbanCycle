@@ -1,8 +1,11 @@
 import AlertModal from "@/components/AlertModal";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
-import { getCartItems, removeFromCart } from "@/lib/api/api";
+import {
+  getCartItems,
+  removeFromCart,
+  createReservationRequest,
+} from "@/lib/api/api";
 import { CartItem, MarketplaceItem } from "@/lib/api/apiModel";
-import { supabase } from "@/lib/utils/supabase";
 import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -133,16 +136,54 @@ const CartPage: React.FC = () => {
     );
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     const selectedItems = cartItems.filter((item) => item.selected);
     if (selectedItems.length === 0) {
-      alert("Please select at least one item to checkout.");
+      Alert.alert("Attention", "Please select at least one item to checkout.");
       return;
     }
-    Alert.alert(
-      "Checkout",
-      `Proceeding to checkout with ${selectedItems.length} items... This feature is coming soon!`,
-    );
+
+    setLoading(true);
+    try {
+      if (!user) {
+        Alert.alert("Error", "User not found.");
+        return;
+      }
+      for (const item of selectedItems) {
+        if (!item.originalItem?.listed_item.id || !item.originalItem.user.id) {
+          console.error("Invalid item data:", item);
+          continue;
+        }
+
+        // Send request
+        await createReservationRequest(
+          user.id,
+          item.originalItem.user.id,
+          item.originalItem.listed_item.id,
+        );
+
+        // Remove from cart locally and remotely
+        await removeFromCart(item.id);
+      }
+
+      setCartItems((prev) => prev.filter((item) => !item.selected));
+
+      SooBottomSheet.push({
+        child: (
+          <AlertModal
+            title="Success"
+            description="Reservation requests sent! You will be notified once the seller approves."
+            status="success"
+            onClose={() => SooBottomSheet.pop()}
+          />
+        ),
+      });
+    } catch (error) {
+      console.error("Checkout error:", error);
+      Alert.alert("Error", "Failed to process request. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const selectedCount = cartItems.filter((item) => item.selected).length;
@@ -324,7 +365,7 @@ const CartPage: React.FC = () => {
             disabled={selectedCount === 0}
           >
             <Text className="text-white font-bold text-lg mr-2">
-              Confirm Reservation
+              Request Reservation
             </Text>
           </TouchableOpacity>
         </View>

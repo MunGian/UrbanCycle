@@ -130,7 +130,6 @@ const ItemDetailsPage: React.FC = () => {
         title = "Already in Cart";
         description = "This item is already in your cart.";
       } else {
-        console.error("Error adding to cart:", error);
         title = "Error";
         description = "Could not add item to cart. Please try again.";
       }

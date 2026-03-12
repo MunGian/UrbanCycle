@@ -4,11 +4,18 @@ import { ListedItem } from "@/lib/api/apiModel";
 import { formatLocalDateTime } from "@/lib/constants/commonConst";
 import { useUserStore } from "@/lib/zustand/useUserStore";
 import React, { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import PostTabs from "./components/PostTabs";
+import { MaterialIcons } from "@expo/vector-icons";
+import { Route } from "@/lib/utils/routes";
+import { useRouter } from "expo-router";
+import { useIncomingRequests } from "@/lib/hooks/useIncomingRequests";
 
 const PostPage: React.FC = () => {
+  const router = useRouter();
   const user = useUserStore((s) => s.user);
+  const requestCount = useIncomingRequests();
+
   const [listedItems, setListedItems] = useState<ListedItem[]>([]);
   const [isMounting, setIsMounting] = useState<boolean>(true);
 
@@ -49,17 +56,35 @@ const PostPage: React.FC = () => {
     loadItems();
   };
 
+  const navigateToCartPage = () => {
+    if (user) {
+      router.push("/pages/transactions/sales");
+    } else {
+      router.push(Route.LoginPage);
+    }
+  };
+
   if (!user) {
     return <AuthPlaceholder />;
   }
 
   return (
     <View className="flex h-full w-full bg-white">
-      <View className="px-6 pt-6 pb-4 bg-white">
+      <View className="flex flex-row justify-between px-6 pt-6 pb-2 bg-white">
         <Text className="text-2xl font-bold text-black">List Items</Text>
-        {/* <Text className="text-gray-500 text-sm mt-1">
-          Give your items a second life
-        </Text> */}
+        <TouchableOpacity
+          onPress={navigateToCartPage}
+          className="relative flex flex-row items-center px-2"
+        >
+          {requestCount > 0 && (
+            <View className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
+              <Text className="text-xs font-bold text-white">
+                {requestCount > 99 ? "99+" : requestCount}
+              </Text>
+            </View>
+          )}
+          <MaterialIcons name="inbox" size={28} color="black" />
+        </TouchableOpacity>
       </View>
 
       <View className="flex-1">

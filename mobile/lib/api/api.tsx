@@ -77,6 +77,7 @@ export const getCartItems = async (userId: string) => {
         category,
         is_free,
         user:user_id (
+          id,
           first_name,
           last_name,
           avatar_url
@@ -317,4 +318,92 @@ export const updateLastViewedCategory = async (
   }
 
   return newCategories;
+};
+
+/* -------------------- Transaction/Reservation Functions -------------------- */
+
+export const createReservationRequest = async (
+  buyerId: string,
+  sellerId: string,
+  itemId: string,
+) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .insert({
+      buyer_id: buyerId,
+      seller_id: sellerId,
+      item_id: itemId,
+      status: "pending",
+    })
+    .select()
+    .single();
+
+  console.log("error:", error);
+  if (error) throw error;
+  return data;
+};
+
+export const getSellerRequests = async (sellerId: string) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select(
+      `
+      *,
+      item:item_id (*),
+      buyer:buyer_id (*)
+    `,
+    )
+    .eq("seller_id", sellerId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+};
+
+export const updateRequestStatus = async (
+  requestId: string,
+  status: "approved" | "rejected",
+  itemId: string,
+) => {
+  if (status === "approved") {
+    // 1. Update transaction status
+    const { error: updateTransError } = await supabase
+      .from("transactions")
+      .update({ status: "approved" })
+      .eq("id", requestId);
+
+    if (updateTransError) throw updateTransError;
+
+    // 2. Update item status to Reserved
+    const { error: updateItemError } = await supabase
+      .from("item")
+      .update({ status: "Reserved" })
+      .eq("id", itemId);
+
+    if (updateItemError) throw updateItemError;
+  } else {
+    const { error } = await supabase
+      .from("transactions")
+      .update({ status: "rejected" })
+      .eq("id", requestId);
+
+    if (error) throw error;
+  }
+};
+
+export const getBuyerRequests = async (buyerId: string) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select(
+      `
+      *,
+      item:item_id (*),
+      seller:seller_id (*)
+    `,
+    )
+    .eq("buyer_id", buyerId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
 };

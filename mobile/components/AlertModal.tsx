@@ -18,9 +18,9 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
   status = "success",
 }) => {
   return (
-    <View className="items-center px-6 pb-10 pt-4">
+    <View className="items-center px-6 pb-10">
       <View
-        className={`w-20 h-20 rounded-full items-center justify-center mb-6 ${status === "success" ? "bg-green-100" : "bg-red-100"}`}
+        className={`w-20 h-20 rounded-full items-center justify-center mb-4 ${status === "success" ? "bg-green-100" : "bg-red-100"}`}
       >
         {status === "success" ? (
           <MaterialIcons name="check-circle" size={48} color="#16A34A" />
@@ -31,7 +31,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
       <Text className="text-2xl font-bold text-gray-900 mb-2 text-center">
         {title}
       </Text>
-      <Text className="text-gray- 500 text-center mb-8 leading-6 text-base">
+      <Text className="text-gray-500 text-center mb-8 leading-6 text-base">
         {description}
       </Text>
       <TouchableOpacity
