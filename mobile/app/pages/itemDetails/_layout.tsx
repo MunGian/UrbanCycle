@@ -1,4 +1,7 @@
+import AlertModal from "@/components/AlertModal";
 import EmphasizedText from "@/components/EmphasizedText";
+import { SooBottomSheet } from "@/components/SooBottomSheetController";
+import { addToCart } from "@/lib/api/api";
 import { MarketplaceItem } from "@/lib/api/apiModel";
 import { formatLocalDateTime } from "@/lib/constants/commonConst";
 import { supabase } from "@/lib/utils/supabase";
@@ -11,7 +14,6 @@ import {
   Image,
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -21,27 +23,32 @@ const ItemDetailsPage: React.FC = () => {
   const navigation = useNavigation();
   const user = useUserStore((s) => s.user);
   const [message, setMessage] = useState<string>("");
-  const [isLoved, setIsLoved] = useState<boolean>(false); // toggle heart
+  const [isLoved, setIsLoved] = useState<boolean>(false);
 
   const item: MarketplaceItem = route.params?.item;
   console.log("Item details route params:", route.params?.item);
 
+  const onUnloginAlert = () => {
+    SooBottomSheet.push({
+      needPadding: false,
+      isDismissible: false,
+      needCloseButton: false,
+      child: (
+        <AlertModal
+          title="Please login"
+          description="You need to be logged in to send a message."
+          status="failed"
+          onClose={() => {
+            SooBottomSheet.pop();
+          }}
+        />
+      ),
+    });
+  };
+
   const handleContactDonor = async () => {
     if (!user) {
-      Alert.alert(
-        "Please login",
-        "You need to be logged in to send a message."
-      );
-      return;
-    }
-
-    if (item.user?.id === user.id) {
-      Alert.alert("This is your item", "You cannot message yourself.");
-      return;
-    }
-
-    if (!item.user?.id) {
-      Alert.alert("Error", "Seller information is missing.");
+      onUnloginAlert();
       return;
     }
 
@@ -51,7 +58,7 @@ const ItemDetailsPage: React.FC = () => {
         .from("message_room")
         .select("*")
         .or(
-          `and(user1_id.eq.${user.id},user2_id.eq.${item.user.id}),and(user1_id.eq.${item.user.id},user2_id.eq.${user.id})`
+          `and(user1_id.eq.${user.id},user2_id.eq.${item.user.id}),and(user1_id.eq.${item.user.id},user2_id.eq.${user.id})`,
         );
 
       if (fetchError) {
@@ -104,18 +111,56 @@ const ItemDetailsPage: React.FC = () => {
     }
   };
 
+  const handleAddToCart = async () => {
+    if (!user) {
+      onUnloginAlert();
+      return;
+    }
+
+    let title = "";
+    let description = "";
+    let status = "success";
+    try {
+      await addToCart(user.id, item.listed_item.id);
+      title = "Added to Cart";
+      description = "This item has been added to your cart.";
+    } catch (error: any) {
+      status = "failed";
+      if (error.code === "23505") {
+        title = "Already in Cart";
+        description = "This item is already in your cart.";
+      } else {
+        console.error("Error adding to cart:", error);
+        title = "Error";
+        description = "Could not add item to cart. Please try again.";
+      }
+    } finally {
+      SooBottomSheet.push({
+        needPadding: false,
+        needCloseButton: false,
+        child: (
+          <AlertModal
+            title={title}
+            description={description}
+            status={status as "success" | "failed"}
+            onClose={() => {
+              SooBottomSheet.pop();
+            }}
+          />
+        ),
+      });
+    }
+  };
+
   return (
     <View className="flex h-full w-full bg-white">
-      {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-100">
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={26} color="black" />
         </TouchableOpacity>
-
         <Text className="text-center text-xl font-bold text-black flex-1">
           Item Details
         </Text>
-
         {/* Heart Button */}
         <TouchableOpacity
           onPress={() => setIsLoved(!isLoved)}
@@ -130,7 +175,6 @@ const ItemDetailsPage: React.FC = () => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Image */}
         <View className="w-full bg-gray-100 aspect-square overflow-hidden">
           <Image
             source={{
@@ -143,20 +187,16 @@ const ItemDetailsPage: React.FC = () => {
           />
         </View>
 
-        {/* Details Section */}
         <View className="px-5 py-5 bg-white -mt-8 rounded-t-3xl shadow-sm">
-          {/* Title */}
           <Text className="text-2xl font-bold text-black mb-0 leading-7">
             {item.listed_item.title}
           </Text>
-
-          {/* Price */}
           <EmphasizedText
             text={
               item.listed_item.is_free
                 ? "Free"
                 : `<em>RM</em> ${(item.listed_item.price || 0).toLocaleString(
-                    "en-MY"
+                    "en-MY",
                   )}`
             }
             className={`text-2xl font-bold mt-1 mb-2 ${
@@ -165,7 +205,6 @@ const ItemDetailsPage: React.FC = () => {
             emClassName="text-xl font-bold"
           />
 
-          {/* Item Info */}
           <View className="flex flex-row gap-6">
             <View>
               <Text className="text-xs text-gray-500 mb-1">Category</Text>
@@ -173,14 +212,12 @@ const ItemDetailsPage: React.FC = () => {
                 {item.listed_item.category}
               </Text>
             </View>
-
             <View>
               <Text className="text-xs text-gray-500 mb-1">Location</Text>
               <Text className="text-sm font-semibold text-black">
                 {item.listed_item.location || "N/A"}
               </Text>
             </View>
-
             <View>
               <Text className="text-xs text-gray-500 mb-1">Posted On</Text>
               <Text className="text-sm font-semibold text-black">
@@ -191,7 +228,6 @@ const ItemDetailsPage: React.FC = () => {
 
           <View className="border-t border-gray-200 my-4" />
 
-          {/* Description */}
           <View>
             <Text className="text-lg font-bold text-black mb-2">
               Description
@@ -199,20 +235,13 @@ const ItemDetailsPage: React.FC = () => {
             <Text className="text-sm text-gray-600 leading-5">
               {item.listed_item.description}
             </Text>
-            {/* <Text className="text-sm text-gray-600 leading-5 mt-2">
-              This is a {item.listed_item.category.toLowerCase()} item available
-              for reuse. Part of our circular economy initiative to reduce waste
-              in Penang and promote sustainable sharing culture.
-            </Text> */}
           </View>
 
           <View className="border-t border-gray-200 my-6" />
 
-          {/* Donor Section */}
           <Text className="text-lg font-bold text-black mb-3">
             About The Donor
           </Text>
-
           <View className="bg-gray-50 rounded-2xl p-4 border border-gray-100 shadow-sm">
             <View className="flex-row items-center mb-4">
               <Image
@@ -235,7 +264,6 @@ const ItemDetailsPage: React.FC = () => {
                 </Text>
               </View>
             </View>
-
             <View className="flex-row justify-around py-3 border-t border-gray-200">
               <View className="items-center">
                 <Text className="text-lg font-bold text-black">12</Text>
@@ -251,44 +279,29 @@ const ItemDetailsPage: React.FC = () => {
               </View>
             </View>
           </View>
-
-          <View className="border-t border-gray-200 my-6" />
-
-          {/* Message Donor */}
-          <Text className="text-lg font-bold text-black mb-2">
-            Contact Donor
-          </Text>
-
-          <TextInput
-            placeholder="Ask about pickup time or condition..."
-            value={message}
-            onChangeText={setMessage}
-            multiline
-            className="bg-gray-100 border border-gray-300 rounded-2xl px-4 py-3 text-sm text-black mb-4"
-            placeholderTextColor="#9CA3AF"
-          />
-
-          <TouchableOpacity
-            onPress={handleContactDonor}
-            className={`bg-black py-4 mb-4 rounded-full items-center shadow-lg flex-row justify-center`}
-          >
-            <Text className="text-white font-bold text-lg mr-2">
-              Send Message to {item.user?.first_name || "Donor"}
-            </Text>
-            <MaterialIcons name="arrow-forward" size={20} color="white" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleContactDonor}
-            className={`bg-blue-800 py-4 rounded-full items-center shadow-lg flex-row justify-center`}
-          >
-            <Text className="text-white font-bold text-lg mr-2">
-              Add to Cart
-            </Text>
-            <MaterialIcons name="arrow-forward" size={20} color="white" />
-          </TouchableOpacity>
+          <View className="h-8" />
         </View>
       </ScrollView>
+
+      <View className="flex-row items-center gap-3 px-4 py-5 border-t border-gray-200 bg-white">
+        <TouchableOpacity
+          onPress={handleContactDonor}
+          className="flex-1 py-3 rounded-full border border-gray-300 flex-row items-center justify-center bg-gray-50"
+        >
+          <MaterialIcons name="chat-bubble-outline" size={18} color="#374151" />
+          <Text className="ml-2 text-gray-700 font-semibold">
+            Message {item.user?.first_name || "Donor"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleAddToCart}
+          className="flex-1 py-3 rounded-full bg-gray-900 flex-row items-center justify-center"
+        >
+          <MaterialIcons name="add-shopping-cart" size={18} color="white" />
+          <Text className="ml-2 text-white font-semibold">Add to Cart</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

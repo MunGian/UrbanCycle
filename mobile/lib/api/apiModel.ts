@@ -42,6 +42,7 @@ export interface CartItem {
   location?: string;
   selected?: boolean;
   category: string;
+  originalItem?: MarketplaceItem;
 }
 
 export interface Report {

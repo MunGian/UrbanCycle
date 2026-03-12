@@ -48,6 +48,42 @@ const Login: React.FC = () => {
   const [passwordVisibility, setPasswordVisibility] = useState(true);
   const [loading, setLoading] = useState(false);
 
+  const onInvalidCredential = () => {
+    SooBottomSheet.push({
+      needPadding: false,
+      child: (
+        <AlertModal
+          title="Invalid Credentials"
+          description="The email or password you entered is incorrect."
+          status="failed"
+          confirmText="Try Again"
+          onClose={() => {
+            SooBottomSheet.pop();
+          }}
+        />
+      ),
+    });
+  };
+
+  const onAccessDenied = () => {
+    SooBottomSheet.push({
+      needPadding: false,
+      isDismissible: false,
+      needCloseButton: false,
+      child: (
+        <AlertModal
+          title="Access Denied"
+          description="Administrative accounts cannot be used on the mobile application. Please use the web dashboard."
+          status="failed"
+          confirmText="Understood"
+          onClose={() => {
+            SooBottomSheet.pop();
+          }}
+        />
+      ),
+    });
+  };
+
   const signInWithGoogle = async () => {
     console.log("signInWithGoogle");
   };
@@ -66,8 +102,7 @@ const Login: React.FC = () => {
       });
 
       if (error) {
-        console.error("Login Error:", error);
-        Alert.alert("Login Failed", error.message);
+        onInvalidCredential();
         return;
       }
 
@@ -77,30 +112,9 @@ const Login: React.FC = () => {
         console.log("Session:", data.session);
 
         const profile = await fetchUserProfile(data.user.id);
-
-        // Check if user is an admin - if so, deny access to mobile app
         if (profile?.role === "admin") {
           await supabase.auth.signOut();
-          // Alert.alert(
-          //   "Access Denied",
-          //   "Administrative accounts cannot be used on the mobile application. Please use the web dashboard.",
-          // );
-          SooBottomSheet.push({
-            title: "",
-            needPadding: false,
-            isDismissible: false,
-            needCloseButton: false,
-            child: (
-              <AlertModal
-                title="Access Denied"
-                description="Administrative accounts cannot be used on the mobile application. Please use the web dashboard."
-                status="failed"
-                onClose={() => {
-                  SooBottomSheet.pop();
-                }}
-              />
-            ),
-          });
+          onAccessDenied();
           return;
         }
 
@@ -131,12 +145,6 @@ const Login: React.FC = () => {
     if (!email || email.length === 0) return true;
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
-  };
-
-  const validatePassword = (password: string) => {
-    const strongPasswordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return strongPasswordRegex.test(password);
   };
 
   const onClearEmailText = () => {

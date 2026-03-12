@@ -31,7 +31,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
       <Text className="text-2xl font-bold text-gray-900 mb-2 text-center">
         {title}
       </Text>
-      <Text className="text-gray-500 text-center mb-8 leading-6 text-base">
+      <Text className="text-gray- 500 text-center mb-8 leading-6 text-base">
         {description}
       </Text>
       <TouchableOpacity

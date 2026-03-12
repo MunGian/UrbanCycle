@@ -44,6 +44,53 @@ export const insertUserName = async (firstName: string, lastName: string) => {
   return await fetchUserProfile(user.id);
 };
 
+/* -------------------- Cart Functions -------------------- */
+export const addToCart = async (userId: string, itemId: string) => {
+  const { error } = await supabase.from("cart").insert({
+    user_id: userId,
+    item_id: itemId,
+    quantity: 1,
+  });
+
+  if (error) throw error;
+};
+
+export const removeFromCart = async (itemId: string) => {
+  const { error } = await supabase.from("cart").delete().eq("id", itemId);
+  return { error };
+};
+
+export const getCartItems = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("cart")
+    .select(
+      `
+      id,
+      quantity,
+      item:item_id (
+        id,
+        title,
+        price,
+        description,
+        images,
+        location,
+        category,
+        is_free,
+        user:user_id (
+          first_name,
+          last_name,
+          avatar_url
+        )
+      )
+    `,
+    )
+    .eq("user_id", userId);
+
+  if (error) throw error;
+
+  return data;
+};
+
 /* -------------------- Upload avatar -------------------- */
 export const upsertAvatar = async (userId: string, avatarUri: string) => {
   const response = await fetch(avatarUri);

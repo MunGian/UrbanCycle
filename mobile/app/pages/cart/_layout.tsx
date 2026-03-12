@@ -1,60 +1,135 @@
-import { CartItem } from "@/lib/api/apiModel";
+import AlertModal from "@/components/AlertModal";
+import { SooBottomSheet } from "@/components/SooBottomSheetController";
+import { getCartItems, removeFromCart } from "@/lib/api/api";
+import { CartItem, MarketplaceItem } from "@/lib/api/apiModel";
+import { supabase } from "@/lib/utils/supabase";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 
 const CartPage: React.FC = () => {
   const navigation = useNavigation();
-  const [manageMode, setManageMode] = useState<Record<string, boolean>>({});
+  const user = useUserStore((s) => s.user);
 
-  // Dummy Cart Data
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: "1",
-      name: "Batik Shirt (L)",
-      price: 0, // Free item
-      seller: "Chistina Wong",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      image:
-        "https://down-my.img.susercontent.com/file/5db95a7b3ae1cc252074372639693cf5",
-      quantity: 1,
-      location: "Gelugor",
-      selected: false,
-      category: "Clothing",
-    },
-    {
-      id: "5",
-      name: "Dell Laptop (i5, 8GB RAM)",
-      price: 0, // Free item
-      seller: "Ricky Owen",
-      avatar: "https://randomuser.me/api/portraits/men/46.jpg",
-      image:
-        "https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/notebooks/dell-plus/db16255/media-gallery/non-touch/laptop-dell-plus-db16255nt-ice-bl-fpr-gallery-5.psd?fmt=png-alpha&pscan=auto&scl=1&hei=804&wid=979&qlt=100,1&resMode=sharp2&size=979,804&chrss=full",
-      quantity: 1,
-      location: "Bukit Mertajam",
-      selected: false,
-      category: "Electronics",
-    },
-  ]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const toggleManageMode = (seller: string) => {
-    setManageMode((prev) => ({
-      ...prev,
-      [seller]: !prev[seller],
-    }));
+  useFocusEffect(
+    useCallback(() => {
+      fetchCartItems();
+    }, [user]),
+  );
+
+  const fetchCartItems = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const data = await getCartItems(user.id);
+      if (data) {
+        const mappedItems: CartItem[] = data.map((record: any) => {
+          const item = record.item;
+          const seller = item.user;
+
+          let imageUrl = "";
+          if (Array.isArray(item.images) && item.images.length > 0) {
+            imageUrl = item.images[0];
+          } else if (typeof item.images === "string") {
+            try {
+              const parsed = JSON.parse(item.images);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                imageUrl = parsed[0];
+              } else {
+                imageUrl = item.images;
+              }
+            } catch {
+              imageUrl = item.images;
+            }
+          }
+
+          return {
+            id: record.id,
+            itemId: item.id,
+            name: item.title,
+            price: item.price || 0,
+            seller: seller
+              ? `${seller.first_name} ${seller.last_name}`
+              : "Unknown Seller",
+            avatar:
+              seller?.avatar_url ||
+              "https://randomuser.me/api/portraits/lego/1.jpg",
+            image: imageUrl,
+            quantity: record.quantity,
+            location: item.location,
+            selected: false,
+            category: item.category,
+            isFree: item.is_free,
+            originalItem: {
+              user: seller,
+              listed_item: item,
+            },
+          };
+        });
+
+        setCartItems(mappedItems);
+      }
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+      SooBottomSheet.push({
+        needPadding: false,
+        isDismissible: false,
+        needCloseButton: false,
+        child: (
+          <AlertModal
+            title="Error"
+            description="Could not fetch cart items."
+            status="failed"
+            onClose={() => {
+              SooBottomSheet.pop();
+            }}
+          />
+        ),
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRemoveItem = (id: string) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
+  const navigateToItemDetailsPage = (item: MarketplaceItem) => {
+    (navigation as any).navigate("pages/itemDetails", { item });
+  };
+
+  const handleRemoveItem = async (id: string) => {
+    try {
+      const { error } = await removeFromCart(id);
+      if (error) {
+        console.error("Remove error:", error);
+        Alert.alert("Error", "Could not remove item.");
+        return;
+      }
+      setCartItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (e) {
+      console.error("Unexpected error:", e);
+      Alert.alert("Error", "An unexpected error occurred.");
+    }
   };
 
   const toggleSelection = (id: string) => {
     setCartItems(
       cartItems.map((item) =>
-        item.id === id ? { ...item, selected: !item.selected } : item
-      )
+        item.id === id ? { ...item, selected: !item.selected } : item,
+      ),
     );
   };
 
@@ -64,12 +139,14 @@ const CartPage: React.FC = () => {
       alert("Please select at least one item to checkout.");
       return;
     }
-    alert(`Proceeding to checkout with ${selectedItems.length} items...`);
+    Alert.alert(
+      "Checkout",
+      `Proceeding to checkout with ${selectedItems.length} items... This feature is coming soon!`,
+    );
   };
 
   const selectedCount = cartItems.filter((item) => item.selected).length;
 
-  // Group items by seller
   const groupedItems = cartItems.reduce(
     (acc, item) => {
       if (!acc[item.seller]) {
@@ -78,12 +155,19 @@ const CartPage: React.FC = () => {
       acc[item.seller].push(item);
       return acc;
     },
-    {} as Record<string, CartItem[]>
+    {} as Record<string, CartItem[]>,
   );
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color="#000000" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex h-full w-full bg-white">
-      {/* Header */}
       <View className="px-4 pt-4 pb-2 border-b border-gray-100 flex-row items-center">
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -102,7 +186,6 @@ const CartPage: React.FC = () => {
           <View className="px-4 pb-4">
             {Object.entries(groupedItems).map(([seller, items]) => (
               <View key={seller} className="mb-2">
-                {/* Seller Header */}
                 <View className="flex-row items-center justify-between pt-6 pb-2 border-b border-gray-100">
                   <View className="flex-row items-center">
                     <Image
@@ -113,14 +196,8 @@ const CartPage: React.FC = () => {
                       {seller}
                     </Text>
                   </View>
-                  <TouchableOpacity onPress={() => toggleManageMode(seller)}>
-                    <Text className="text-gray-500 font-medium">
-                      {manageMode[seller] ? "Done" : "Manage"}
-                    </Text>
-                  </TouchableOpacity>
                 </View>
 
-                {/* Items for this seller */}
                 {items.map((item) => (
                   <Swipeable
                     key={item.id}
@@ -138,72 +215,70 @@ const CartPage: React.FC = () => {
                     )}
                   >
                     <View className="flex-row py-4 border-b border-gray-100 items-center bg-white">
-                      {/* Checkbox */}
-                      {manageMode[seller] && (
-                        <TouchableOpacity
-                          onPress={() => toggleSelection(item.id)}
-                          className="mr-3"
-                        >
-                          <MaterialIcons
-                            name={
-                              item.selected
-                                ? "check-box"
-                                : "check-box-outline-blank"
-                            }
-                            size={24}
-                            color={item.selected ? "black" : "#D1D5DB"}
-                          />
-                        </TouchableOpacity>
-                      )}
+                      <TouchableOpacity
+                        onPress={() => toggleSelection(item.id)}
+                        className="mr-3"
+                      >
+                        <MaterialIcons
+                          name={
+                            item.selected
+                              ? "check-box"
+                              : "check-box-outline-blank"
+                          }
+                          size={24}
+                          color={item.selected ? "black" : "#D1D5DB"}
+                        />
+                      </TouchableOpacity>
 
-                      <Image
-                        source={{ uri: item.image }}
-                        className="w-24 h-24 rounded-xl bg-gray-200"
-                      />
-                      <View className="flex-1 ml-4">
-                        <View className="flex-row justify-between items-start">
-                          <View className="flex-1 mr-2">
-                            <Text
-                              className="text-base font-bold text-black leading-tight"
-                              numberOfLines={2}
-                            >
-                              {item.name}
-                            </Text>
-                            <View className="bg-gray-100 self-start px-2 py-0.5 rounded mt-1">
-                              <Text className="text-xs text-gray-500">
-                                {item.category}
+                      <TouchableOpacity
+                        className="flex-1 flex-row items-center"
+                        onPress={() =>
+                          item.originalItem &&
+                          navigateToItemDetailsPage(item.originalItem)
+                        }
+                      >
+                        <Image
+                          source={{ uri: item.image }}
+                          className="w-24 h-24 rounded-xl bg-gray-200"
+                        />
+                        <View className="flex-1 ml-4 self-stretch justify-between">
+                          <View className="flex-row justify-between items-start">
+                            <View className="flex-1 mr-2">
+                              <Text
+                                className="text-base font-bold text-black leading-tight"
+                                numberOfLines={2}
+                              >
+                                {item.name}
+                              </Text>
+                              <View className="bg-gray-100 self-start px-2 py-0.5 rounded mt-1">
+                                <Text className="text-xs text-gray-500">
+                                  {item.category}
+                                </Text>
+                              </View>
+                              <Text className="text-sm font-semibold text-gray-800 mt-1">
+                                {(item as any).isFree
+                                  ? "Free"
+                                  : `RM ${item.price.toFixed(2)}`}
                               </Text>
                             </View>
                           </View>
-                          {manageMode[seller] && (
-                            <TouchableOpacity
-                              onPress={() => handleRemoveItem(item.id)}
-                              className="p-1"
-                            >
-                              <MaterialIcons
-                                name="delete-outline"
-                                size={24}
-                                color="#EF4444"
-                              />
-                            </TouchableOpacity>
-                          )}
-                        </View>
 
-                        <View className="flex-1 justify-end">
-                          {item.location && (
-                            <View className="flex-row items-center mt-2">
-                              <MaterialIcons
-                                name="location-on"
-                                size={14}
-                                color="#6B7280"
-                              />
-                              <Text className="text-xs text-gray-600 ml-1">
-                                {item.location}
-                              </Text>
-                            </View>
-                          )}
+                          <View className="flex-1 justify-end">
+                            {item.location && (
+                              <View className="flex-row items-center mt-2">
+                                <MaterialIcons
+                                  name="location-on"
+                                  size={14}
+                                  color="#6B7280"
+                                />
+                                <Text className="text-xs text-gray-600 ml-1">
+                                  {item.location}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     </View>
                   </Swipeable>
                 ))}
@@ -219,7 +294,7 @@ const CartPage: React.FC = () => {
               Your cart is empty
             </Text>
             <Text className="text-gray-400 text-sm mt-2 text-center px-10">
-              Looks like you haven't added any items yet.
+              Looks like you haven&apos;t added any items yet.
             </Text>
             <TouchableOpacity
               onPress={() => navigation.goBack()}
@@ -231,7 +306,6 @@ const CartPage: React.FC = () => {
         )}
       </ScrollView>
 
-      {/* Checkout Section */}
       {cartItems.length > 0 && (
         <View className="p-5 border-t border-gray-100 bg-white pb-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <View className="flex-row justify-between items-center mb-6">
@@ -252,7 +326,6 @@ const CartPage: React.FC = () => {
             <Text className="text-white font-bold text-lg mr-2">
               Confirm Reservation
             </Text>
-            <MaterialIcons name="arrow-forward" size={20} color="white" />
           </TouchableOpacity>
         </View>
       )}

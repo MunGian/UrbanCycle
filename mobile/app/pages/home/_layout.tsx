@@ -186,7 +186,6 @@ const HomePage: React.FC = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View className="flex h-full w-full flex-1 bg-white">
-        {/* Header Section */}
         <View className="px-4 pt-4 pb-2">
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-1">
