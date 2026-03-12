@@ -42,6 +42,7 @@ const HomePage: React.FC = () => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   useEffect(() => {
+    if (user === undefined) return;
     loadItems();
   }, [user]);
 
