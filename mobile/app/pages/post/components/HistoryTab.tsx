@@ -16,7 +16,7 @@ import { ListedItem, TransactionRequest } from "@/lib/api/apiModel";
 import { getBuyerRequests, getSellerRequests } from "@/lib/api/api";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
 import ReviewBottomSheet from "./ReviewBottomSheet";
-import { getTransactionReview } from "@/lib/api/reviews";
+import { getTransactionReview, getMyReviews } from "@/lib/api/reviews";
 
 interface HistoryTabProps {
   soldItems: ListedItem[];
@@ -24,9 +24,12 @@ interface HistoryTabProps {
 }
 
 type HistoryItemType =
-  | { type: "sold_transaction"; data: TransactionRequest }
-  | { type: "bought_transaction"; data: TransactionRequest }
-  | { type: "manual_sold"; data: ListedItem };
+  | { type: "sold_transaction"; data: TransactionRequest; isReviewed: boolean }
+  | {
+      type: "bought_transaction";
+      data: TransactionRequest;
+      isReviewed: boolean;
+    };
 
 const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
   const user = useUserStore((s) => s.user);
@@ -34,14 +37,19 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [historyList, setHistoryList] = useState<HistoryItemType[]>([]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
     try {
       setLoading(true);
-      const [sellerReqs, buyerReqs] = await Promise.all([
+      const [sellerReqs, buyerReqs, userReviews] = await Promise.all([
         getSellerRequests(user.id),
         getBuyerRequests(user.id),
+        getMyReviews(user.id),
       ]);
+
+      const reviewedTransactionIds = new Set(
+        userReviews?.map((r: any) => r.transaction_id),
+      );
 
       const completedSellerReqs = (sellerReqs || []).filter(
         (r) => r.status === "completed",
@@ -50,39 +58,24 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
         (r) => r.status === "completed",
       );
 
-      // Identify items in soldItems that are NOT in completedSellerReqs
-      // These are items marked as Sold/Donated manually without an app transaction
-      const soldItemIdsWithTransaction = new Set(
-        completedSellerReqs.map((r) => r.item_id),
-      );
-      const manualSoldItems = soldItems.filter(
-        (item) => !soldItemIdsWithTransaction.has(item.id!),
-      );
-
       // Combine into a single list
       const combined: HistoryItemType[] = [
         ...completedSellerReqs.map((r) => ({
           type: "sold_transaction" as const,
           data: r,
+          isReviewed: reviewedTransactionIds.has(r.id),
         })),
         ...completedBuyerReqs.map((r) => ({
           type: "bought_transaction" as const,
           data: r,
-        })),
-        ...manualSoldItems.map((item) => ({
-          type: "manual_sold" as const,
-          data: item,
+          isReviewed: reviewedTransactionIds.has(r.id),
         })),
       ];
 
       // Sort by date (descending)
       combined.sort((a, b) => {
-        const dateA = new Date(
-          a.type === "manual_sold" ? a.data.created_at || 0 : a.data.created_at,
-        ).getTime();
-        const dateB = new Date(
-          b.type === "manual_sold" ? b.data.created_at || 0 : b.data.created_at,
-        ).getTime();
+        const dateA = new Date(a.data.created_at).getTime();
+        const dateB = new Date(b.data.created_at).getTime();
         return dateB - dateA;
       });
 
@@ -93,12 +86,12 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user, soldItems]);
 
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [user, soldItems]),
+    }, [fetchData]),
   );
 
   const handleRefresh = async () => {
@@ -135,7 +128,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
             reviewerId={user.id}
             revieweeId={revieweeId}
             onReviewSubmitted={() => {
-              // Optionally refresh
+              fetchData();
             }}
           />
         ),
@@ -154,49 +147,6 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
   }
 
   const renderItem = (item: HistoryItemType) => {
-    if (item.type === "manual_sold") {
-      const soldItem = item.data as ListedItem;
-      return (
-        <View
-          key={`manual-${soldItem.id}`}
-          className="bg-white border border-gray-100 rounded-2xl p-4 mb-4 shadow-sm flex-row opacity-80"
-        >
-          <View className="w-20 h-20 bg-gray-100 rounded-xl mr-4 overflow-hidden">
-            {soldItem.images ? (
-              <Image
-                source={{
-                  uri: Array.isArray(soldItem.images)
-                    ? soldItem.images[0]
-                    : soldItem.images,
-                }}
-                className="w-full h-full"
-                resizeMode="cover"
-              />
-            ) : (
-              <View className="w-full h-full items-center justify-center">
-                <MaterialIcons
-                  name="image-not-supported"
-                  size={24}
-                  color="#9CA3AF"
-                />
-              </View>
-            )}
-          </View>
-          <View className="flex-1 justify-center">
-            <Text className="text-base font-bold text-black" numberOfLines={1}>
-              {soldItem.title}
-            </Text>
-            <Text className="text-sm text-gray-500 mt-1">
-              Marked as {soldItem.status}
-            </Text>
-            <Text className="text-xs text-gray-400 mt-1">
-              (No in-app transaction)
-            </Text>
-          </View>
-        </View>
-      );
-    }
-
     const transaction = item.data as TransactionRequest;
     const isSeller = item.type === "sold_transaction";
     const otherParty = isSeller ? transaction.buyer : transaction.seller;
@@ -240,16 +190,18 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
           </View>
         </View>
 
-        <View className="flex-row justify-end">
-          <TouchableOpacity
-            onPress={() => handleReview(transaction, isSeller)}
-            className="bg-black px-4 py-2 rounded-full"
-          >
-            <Text className="text-white font-bold text-sm">
-              {isSeller ? "Review Buyer" : "Review Seller"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {!item.isReviewed && (
+          <View className="flex-row justify-end">
+            <TouchableOpacity
+              onPress={() => handleReview(transaction, isSeller)}
+              className="bg-black px-4 py-2 rounded-full"
+            >
+              <Text className="text-white font-bold text-sm">
+                {isSeller ? "Review Buyer" : "Review Seller"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };

@@ -197,7 +197,7 @@ const SalesPage: React.FC = () => {
 
               {req.status === "completed" && (
                 <View className="mt-2 bg-green-50 p-2 rounded border border-green-100">
-                  <Text className="text-green-800 text-xs text-center font-medium">
+                  <Text className="text-green-800 text-xs text-start font-medium">
                     Transaction completed! View details and review in History
                     tab.
                   </Text>

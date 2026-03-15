@@ -4,9 +4,9 @@ import { category, formatPrice } from "@/lib/constants/commonConst";
 import { Route } from "@/lib/utils/routes";
 import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -41,10 +41,12 @@ const HomePage: React.FC = () => {
   const [marketplaceData, setMarketplaceData] = useState<MarketplaceItem[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (user === undefined) return;
-    loadItems();
-  }, [user]);
+  useFocusEffect(
+    useCallback(() => {
+      if (user === undefined) return;
+      loadItems();
+    }, [user]),
+  );
 
   const loadItems = async () => {
     setIsLoading(true);

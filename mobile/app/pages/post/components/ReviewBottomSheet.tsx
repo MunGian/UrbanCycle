@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
+import AlertModal from "@/components/AlertModal";
 
 interface ReviewBottomSheetProps {
   transactionId: string;
@@ -43,9 +44,19 @@ const ReviewBottomSheet: React.FC<ReviewBottomSheetProps> = ({
         rating,
         comment,
       });
-
-      Alert.alert("Success", "Review submitted!");
       SooBottomSheet.pop(); // Close review sheet
+      setTimeout(() => {
+        SooBottomSheet.push({
+          child: (
+            <AlertModal
+              title={"Review Submitted"}
+              description="Your review has been submitted successfully."
+              status="success"
+              onClose={() => SooBottomSheet.pop()}
+            />
+          ),
+        });
+      }, 500);
       onReviewSubmitted();
     } catch (error) {
       console.error("Submit review error:", error);

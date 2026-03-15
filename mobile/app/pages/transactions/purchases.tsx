@@ -147,7 +147,7 @@ const PurchasesPage: React.FC = () => {
 
               {req.status === "approved" && (
                 <View className="mt-2 bg-green-50 p-2 rounded border border-green-100">
-                  <Text className="text-green-800 text-xs">
+                  <Text className="text-green-800 font-medium text-xs">
                     This item has been reserved for you! Contact the seller to
                     proceed.
                   </Text>
@@ -155,14 +155,14 @@ const PurchasesPage: React.FC = () => {
               )}
               {req.status === "rejected" && (
                 <View className="mt-2 bg-red-50 p-2 rounded border border-red-100">
-                  <Text className="text-red-800 text-xs">
+                  <Text className="text-red-800 font-medium text-xs">
                     The seller has rejected your request.
                   </Text>
                 </View>
               )}
               {req.status === "completed" && (
                 <View className="mt-2 bg-green-50 p-2 rounded border border-green-100">
-                  <Text className="text-green-800 text-xs text-center font-medium">
+                  <Text className="text-green-800 text-xs text-start font-medium">
                     Transaction completed! View details and review in History
                     tab.
                   </Text>

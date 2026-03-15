@@ -1,3 +1,4 @@
+import AlertModal from "@/components/AlertModal";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
 import {
   deleteItem,
@@ -43,25 +44,27 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
   };
 
   const handleDelete = async (item: ListedItem) => {
-    Alert.alert("Delete Item", "Are you sure you want to delete this item?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await deleteItem(item.id!);
-            await onRefresh();
-          } catch (error) {
-            console.error("Failed to delete item:", error);
-            Alert.alert("Error", "Failed to delete item");
-          }
-        },
-      },
-    ]);
+    SooBottomSheet.push({
+      child: (
+        <AlertModal
+          title={"Confirm Deletion"}
+          description="Are you sure you want to delete this item?"
+          status="success"
+          confirmText="Yes, Delete"
+          onClose={async () => {
+            try {
+              await deleteItem(item.id!);
+              await onRefresh();
+            } catch (error) {
+              console.error("Failed to delete item:", error);
+              Alert.alert("Error", "Failed to delete item");
+            } finally {
+              SooBottomSheet.pop();
+            }
+          }}
+        />
+      ),
+    });
   };
 
   const handleChangeStatus = (item: ListedItem) => {
@@ -85,22 +88,16 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
                 );
 
                 if (transaction) {
-                  Alert.alert(
-                    "Complete Transaction",
-                    `Did you complete this transaction with ${transaction.buyer?.first_name || "the buyer"}?`,
-                    [
-                      {
-                        text: "No",
-                        style: "cancel",
-                        onPress: async () => {
-                          // Allow updating status even if not confirmed transaction (e.g. sold elsewhere)
-                          await updateItem(item.id!, { status: value });
-                          await onRefresh();
-                        },
-                      },
-                      {
-                        text: "Yes, Complete",
-                        onPress: async () => {
+                  SooBottomSheet.push({
+                    needCloseButton: true,
+                    child: (
+                      <AlertModal
+                        title="Complete Transaction"
+                        description={`Did you complete this transaction with ${transaction.buyer?.first_name || "the buyer"}?`}
+                        status="success"
+                        confirmText="Yes, Complete"
+                        onClose={async () => {
+                          SooBottomSheet.pop();
                           await markTransactionAsCompleted(
                             transaction.id,
                             item.id!,
@@ -127,10 +124,10 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
                               });
                             }, 500);
                           }
-                        },
-                      },
-                    ],
-                  );
+                        }}
+                      />
+                    ),
+                  });
                   return;
                 }
               }

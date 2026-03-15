@@ -3,13 +3,14 @@ import { fetchUserItems } from "@/lib/api/api";
 import { ListedItem } from "@/lib/api/apiModel";
 import { formatLocalDateTime } from "@/lib/constants/commonConst";
 import { useUserStore } from "@/lib/zustand/useUserStore";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import PostTabs from "./components/PostTabs";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Route } from "@/lib/utils/routes";
 import { useRouter } from "expo-router";
 import { useIncomingRequests } from "@/lib/hooks/useIncomingRequests";
+import { useFocusEffect } from "@react-navigation/native";
 
 const PostPage: React.FC = () => {
   const router = useRouter();
@@ -19,11 +20,12 @@ const PostPage: React.FC = () => {
   const [listedItems, setListedItems] = useState<ListedItem[]>([]);
   const [isMounting, setIsMounting] = useState<boolean>(true);
 
-  useEffect(() => {
-    if (user) {
+  useFocusEffect(
+    useCallback(() => {
+      if (user === undefined) return;
       loadItems();
-    }
-  }, [user]);
+    }, [user]),
+  );
 
   const loadItems = async () => {
     if (!user) return;

@@ -23,6 +23,16 @@ export const fetchUserReviews = async (userId: string) => {
   return data;
 };
 
+export const getMyReviews = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("transaction_id")
+    .eq("reviewer_id", userId);
+
+  if (error) throw error;
+  return data;
+};
+
 export const getTransactionReview = async (transactionId: string, reviewerId: string) => {
   const { data, error } = await supabase
     .from("reviews")
