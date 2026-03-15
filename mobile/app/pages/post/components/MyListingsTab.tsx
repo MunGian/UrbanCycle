@@ -1,7 +1,13 @@
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
-import { deleteItem, updateItem } from "@/lib/api/api";
+import {
+  deleteItem,
+  getApprovedTransactionByItem,
+  markTransactionAsCompleted,
+  updateItem,
+} from "@/lib/api/api";
 import { ListedItem } from "@/lib/api/apiModel";
 import { formatPrice } from "@/lib/constants/commonConst";
+import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -13,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import ReviewBottomSheet from "./ReviewBottomSheet";
 import OptionBottomSheet from "./OptionBottomSheet";
 
 interface MyListingsTabProps {
@@ -27,6 +34,7 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
   onEdit,
 }) => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const user = useUserStore((s) => s.user);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -71,6 +79,63 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
           paddingBottom={24}
           onSelect={async (value) => {
             try {
+              if (value === "Sold" || value === "Donated") {
+                const transaction = await getApprovedTransactionByItem(
+                  item.id!,
+                );
+
+                if (transaction) {
+                  Alert.alert(
+                    "Complete Transaction",
+                    `Did you complete this transaction with ${transaction.buyer?.first_name || "the buyer"}?`,
+                    [
+                      {
+                        text: "No",
+                        style: "cancel",
+                        onPress: async () => {
+                          // Allow updating status even if not confirmed transaction (e.g. sold elsewhere)
+                          await updateItem(item.id!, { status: value });
+                          await onRefresh();
+                        },
+                      },
+                      {
+                        text: "Yes, Complete",
+                        onPress: async () => {
+                          await markTransactionAsCompleted(
+                            transaction.id,
+                            item.id!,
+                            value as "Sold" | "Donated",
+                          );
+                          await onRefresh();
+
+                          if (user && transaction.buyer) {
+                            // Close current sheet first? SooBottomSheet.push adds to stack.
+                            // We might want to delay slightly.
+                            setTimeout(() => {
+                              SooBottomSheet.push({
+                                title: `Rate ${transaction.buyer.first_name}`,
+                                child: (
+                                  <ReviewBottomSheet
+                                    transactionId={transaction.id}
+                                    reviewerId={user.id}
+                                    revieweeId={transaction.buyer.id}
+                                    onReviewSubmitted={() => {
+                                      // SooBottomSheet.pop(); // Handled inside component
+                                    }}
+                                  />
+                                ),
+                              });
+                            }, 500);
+                          }
+                        },
+                      },
+                    ],
+                  );
+                  return;
+                }
+              }
+
+              // Standard update for other statuses or if no transaction found
               await updateItem(item.id!, { status: value });
               await onRefresh();
             } catch (error) {
@@ -84,15 +149,20 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
   };
 
   const showOptions = (item: ListedItem) => {
+    const options = [
+      { label: "Edit", value: "edit" },
+      { label: "Delete", value: "delete" },
+    ];
+
+    if (item.status === "Reserved") {
+      options.splice(1, 0, { label: "Change Status", value: "status" });
+    }
+
     SooBottomSheet.push({
       title: "Options",
       child: (
         <OptionBottomSheet
-          options={[
-            { label: "Edit", value: "edit" },
-            { label: "Change Status", value: "status" },
-            { label: "Delete", value: "delete" },
-          ]}
+          options={options}
           selectedValue=""
           paddingBottom={24}
           onSelect={(value) => {

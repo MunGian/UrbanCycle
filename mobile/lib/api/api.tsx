@@ -338,7 +338,6 @@ export const createReservationRequest = async (
     .select()
     .single();
 
-  console.log("error:", error);
   if (error) throw error;
   return data;
 };
@@ -406,4 +405,48 @@ export const getBuyerRequests = async (buyerId: string) => {
 
   if (error) throw error;
   return data;
+};
+
+/* -------------------- Offline Transaction & Review Functions -------------------- */
+export const getApprovedTransactionByItem = async (itemId: string) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select(
+      `
+      *,
+      buyer:buyer_id (*),
+      seller:seller_id (*)
+    `,
+    )
+    .eq("item_id", itemId)
+    .eq("status", "approved")
+    .maybeSingle();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return data;
+};
+
+export const markTransactionAsCompleted = async (
+  transactionId: string,
+  itemId: string,
+  status: "Sold" | "Donated",
+) => {
+  // Update transaction status
+  const { error: transError } = await supabase
+    .from("transactions")
+    .update({ status: "completed" })
+    .eq("id", transactionId);
+
+  if (transError) throw transError;
+
+  // Update item status
+  const { error: itemError } = await supabase
+    .from("item")
+    .update({ status })
+    .eq("id", itemId);
+
+  if (itemError) throw itemError;
 };

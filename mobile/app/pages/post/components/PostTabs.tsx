@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import MyListingsTab from "./MyListingsTab";
 import ListItemTab from "./PostItemTab";
+import HistoryTab from "./HistoryTab";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -21,6 +22,14 @@ const PostTabs: React.FC<PostTabsProps> = ({
   isMounting,
 }) => {
   const [itemToEdit, setItemToEdit] = useState<ListedItem | null>(null);
+
+  const activeItems = listedItems.filter(
+    (item) => item.status !== "Sold" && item.status !== "Donated",
+  );
+
+  const historyItems = listedItems.filter(
+    (item) => item.status === "Sold" || item.status === "Donated",
+  );
 
   return (
     <Tab.Navigator
@@ -40,6 +49,7 @@ const PostTabs: React.FC<PostTabsProps> = ({
         tabBarActiveTintColor: "#000000",
         tabBarInactiveTintColor: "#9CA3AF",
         animationEnabled: true,
+        tabBarScrollEnabled: true,
       }}
     >
       <Tab.Screen
@@ -56,7 +66,7 @@ const PostTabs: React.FC<PostTabsProps> = ({
             </View>
           ) : (
             <MyListingsTab
-              listedItems={listedItems}
+              listedItems={activeItems}
               onRefresh={onRefresh}
               onEdit={(item) => {
                 setItemToEdit(item);
@@ -84,6 +94,23 @@ const PostTabs: React.FC<PostTabsProps> = ({
             }}
           />
         )}
+      </Tab.Screen>
+      <Tab.Screen
+        name="History"
+        options={{ title: "History" }}
+        listeners={{
+          focus: () => setItemToEdit(null),
+        }}
+      >
+        {({ navigation }) =>
+          isMounting ? (
+            <View className="flex-1 bg-white items-center justify-center">
+              <ActivityIndicator size="large" color="#2c323d" />
+            </View>
+          ) : (
+            <HistoryTab soldItems={historyItems} onRefresh={onRefresh} />
+          )
+        }
       </Tab.Screen>
     </Tab.Navigator>
   );

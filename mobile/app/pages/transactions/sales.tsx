@@ -132,7 +132,9 @@ const SalesPage: React.FC = () => {
                       ? "bg-green-100"
                       : req.status === "rejected"
                         ? "bg-red-100"
-                        : "bg-yellow-100"
+                        : req.status === "completed"
+                          ? "bg-green-100"
+                          : "bg-yellow-100"
                   }`}
                 >
                   <Text
@@ -141,7 +143,9 @@ const SalesPage: React.FC = () => {
                         ? "text-green-700"
                         : req.status === "rejected"
                           ? "text-red-700"
-                          : "text-yellow-700"
+                          : req.status === "completed"
+                            ? "text-green-700"
+                            : "text-yellow-700"
                     }`}
                   >
                     {req.status.toUpperCase()}
@@ -188,6 +192,15 @@ const SalesPage: React.FC = () => {
                   >
                     <Text className="text-white font-bold">Approve</Text>
                   </TouchableOpacity>
+                </View>
+              )}
+
+              {req.status === "completed" && (
+                <View className="mt-2 bg-green-50 p-2 rounded border border-green-100">
+                  <Text className="text-green-800 text-xs text-center font-medium">
+                    Transaction completed! View details and review in History
+                    tab.
+                  </Text>
                 </View>
               )}
             </View>

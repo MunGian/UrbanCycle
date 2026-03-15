@@ -138,11 +138,6 @@ const CartPage: React.FC = () => {
 
   const handleCheckout = async () => {
     const selectedItems = cartItems.filter((item) => item.selected);
-    if (selectedItems.length === 0) {
-      Alert.alert("Attention", "Please select at least one item to checkout.");
-      return;
-    }
-
     setLoading(true);
     try {
       if (!user) {

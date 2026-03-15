@@ -93,7 +93,9 @@ const PurchasesPage: React.FC = () => {
                       ? "bg-green-100"
                       : req.status === "rejected"
                         ? "bg-red-100"
-                        : "bg-yellow-100"
+                        : req.status === "completed"
+                          ? "bg-green-100"
+                          : "bg-yellow-100"
                   }`}
                 >
                   <Text
@@ -102,7 +104,9 @@ const PurchasesPage: React.FC = () => {
                         ? "text-green-700"
                         : req.status === "rejected"
                           ? "text-red-700"
-                          : "text-yellow-700"
+                          : req.status === "completed"
+                            ? "text-green-700"
+                            : "text-yellow-700"
                     }`}
                   >
                     {req.status.toUpperCase()}
@@ -153,6 +157,14 @@ const PurchasesPage: React.FC = () => {
                 <View className="mt-2 bg-red-50 p-2 rounded border border-red-100">
                   <Text className="text-red-800 text-xs">
                     The seller has rejected your request.
+                  </Text>
+                </View>
+              )}
+              {req.status === "completed" && (
+                <View className="mt-2 bg-green-50 p-2 rounded border border-green-100">
+                  <Text className="text-green-800 text-xs text-center font-medium">
+                    Transaction completed! View details and review in History
+                    tab.
                   </Text>
                 </View>
               )}
