@@ -182,7 +182,9 @@ const SalesPage: React.FC = () => {
                     }
                     className="bg-red-50 px-6 py-2 rounded-full border border-red-100"
                   >
-                    <Text className="text-red-500 font-bold">Reject</Text>
+                    <Text className="text-red-500 text-sm font-bold">
+                      Reject
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() =>
@@ -190,7 +192,9 @@ const SalesPage: React.FC = () => {
                     }
                     className="bg-black px-6 py-2 rounded-full"
                   >
-                    <Text className="text-white font-bold">Approve</Text>
+                    <Text className="text-white text-sm font-bold">
+                      Approve
+                    </Text>
                   </TouchableOpacity>
                 </View>
               )}

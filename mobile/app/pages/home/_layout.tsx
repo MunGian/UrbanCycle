@@ -213,15 +213,22 @@ const HomePage: React.FC = () => {
                   : "Guest"}
               </Text>
             </View>
-            <TouchableOpacity onPress={navigateToCartPage} className="p-2 mr-1">
-              <MaterialIcons name="shopping-cart" size={28} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={navigateToReservationPage}
-              className="p-2"
-            >
-              <MaterialIcons name="send" size={28} color="black" />
-            </TouchableOpacity>
+            {user && (
+              <>
+                <TouchableOpacity
+                  onPress={navigateToCartPage}
+                  className="p-2 mr-1"
+                >
+                  <MaterialIcons name="shopping-cart" size={28} color="black" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={navigateToReservationPage}
+                  className="p-2"
+                >
+                  <MaterialIcons name="mail" size={28} color="black" />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
 
           <View className="flex-row items-center gap-2">

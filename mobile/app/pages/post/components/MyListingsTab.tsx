@@ -68,16 +68,20 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
   };
 
   const handleChangeStatus = (item: ListedItem) => {
+    const options = [
+      { label: "Active", value: "Active" },
+      { label: "Reserved", value: "Reserved" },
+      { label: "Sold", value: "Sold" },
+    ];
+    if (item?.is_free) {
+      options.splice(1, 0, { label: "Donated", value: "Donated" });
+    }
+
     SooBottomSheet.push({
       title: "Change Status",
       child: (
         <OptionBottomSheet
-          options={[
-            { label: "Active", value: "Active" },
-            { label: "Reserved", value: "Reserved" },
-            { label: "Sold", value: "Sold" },
-            { label: "Donated", value: "Donated" },
-          ]}
+          options={options}
           selectedValue={item.status}
           paddingBottom={24}
           onSelect={async (value) => {

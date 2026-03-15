@@ -8,7 +8,7 @@ import { supabase } from "@/lib/utils/supabase";
 import { useUserStore } from "@/lib/zustand/useUserStore";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Image,
@@ -16,17 +16,86 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Dimensions,
+  FlatList,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
+import { useRouter } from "expo-router";
+import { Route } from "@/lib/utils/routes";
 
 const ItemDetailsPage: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const user = useUserStore((s) => s.user);
   const [message, setMessage] = useState<string>("");
-  const [isLoved, setIsLoved] = useState<boolean>(false);
+  const [soldDonatedCount, setSoldDonatedCount] = useState<number>(0);
+  const [averageRating, setAverageRating] = useState<number>(0);
+  const [positivePercentage, setPositivePercentage] = useState<number>(0);
 
   const item: MarketplaceItem = route.params?.item;
   console.log("Item details route params:", route.params?.item);
+
+  const { width } = Dimensions.get("window");
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const images = Array.isArray(item.listed_item.images)
+    ? item.listed_item.images
+    : [item.listed_item.images];
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const slideSize = event.nativeEvent.layoutMeasurement.width;
+    const index = event.nativeEvent.contentOffset.x / slideSize;
+    const roundIndex = Math.round(index);
+    if (roundIndex !== activeIndex) {
+      setActiveIndex(roundIndex);
+    }
+  };
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!item?.user?.id) return;
+
+      try {
+        // Fetch count of Sold/Donated items
+        const { count, error: countError } = await supabase
+          .from("item")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", item.user.id)
+          .in("status", ["Sold", "Donated"]);
+
+        if (!countError && count !== null) {
+          setSoldDonatedCount(count);
+        }
+
+        // Fetch Reviews for user
+        const { data: reviews, error: reviewsError } = await supabase
+          .from("reviews")
+          .select("rating")
+          .eq("reviewee_id", item.user.id);
+
+        if (!reviewsError && reviews && reviews.length > 0) {
+          const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+          const avg = totalRating / reviews.length;
+
+          // Round to 1 decimal place
+          setAverageRating(Math.round(avg * 10) / 10);
+
+          // Calculate Positive % (>= 4 stars)
+          const positiveCount = reviews.filter((r) => r.rating >= 4).length;
+          const percentage = Math.round((positiveCount / reviews.length) * 100);
+          setPositivePercentage(percentage);
+        } else {
+          setAverageRating(0);
+          setPositivePercentage(0);
+        }
+      } catch (err) {
+        console.error("Error fetching user stats:", err);
+      }
+    };
+
+    fetchStats();
+  }, [item]);
 
   const onUnloginAlert = () => {
     SooBottomSheet.push({
@@ -151,6 +220,10 @@ const ItemDetailsPage: React.FC = () => {
     }
   };
 
+  const navigateToCartPage = () => {
+    (navigation as any).navigate("pages/cart");
+  };
+
   return (
     <View className="flex h-full w-full bg-white">
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-100">
@@ -160,30 +233,45 @@ const ItemDetailsPage: React.FC = () => {
         <Text className="text-center text-xl font-bold text-black flex-1">
           Item Details
         </Text>
-        {/* Heart Button */}
-        <TouchableOpacity
-          onPress={() => setIsLoved(!isLoved)}
-          className="p-2 rounded-full bg-gray-100"
-        >
-          <MaterialIcons
-            name={isLoved ? "favorite" : "favorite-border"}
-            size={24}
-            color={isLoved ? "red" : "black"}
-          />
-        </TouchableOpacity>
+        {user && (
+          <TouchableOpacity onPress={navigateToCartPage} className="p-2 mr-1">
+            <MaterialIcons name="shopping-cart" size={28} color="black" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View className="w-full bg-gray-100 aspect-square overflow-hidden">
-          <Image
-            source={{
-              uri: Array.isArray(item.listed_item.images)
-                ? item.listed_item.images[0]
-                : item.listed_item.images,
-            }}
-            className="w-full h-full"
-            resizeMode="cover"
+        <View className="w-full bg-gray-100 aspect-square overflow-hidden relative">
+          <FlatList
+            data={images}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            renderItem={({ item }) => (
+              <View style={{ width: width, height: width }}>
+                <Image
+                  source={{ uri: item }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                />
+              </View>
+            )}
+            keyExtractor={(_, index) => index.toString()}
           />
+          {images.length > 1 && (
+            <View className="absolute bottom-12 left-0 right-0 flex-row justify-center items-center gap-2">
+              {images.map((_, index) => (
+                <View
+                  key={index}
+                  className={`w-2 h-2 rounded-full ${
+                    index === activeIndex ? "bg-white" : "bg-white/50"
+                  }`}
+                />
+              ))}
+            </View>
+          )}
         </View>
 
         <View className="px-5 py-5 bg-white -mt-8 rounded-t-3xl shadow-sm">
@@ -265,15 +353,23 @@ const ItemDetailsPage: React.FC = () => {
             </View>
             <View className="flex-row justify-around py-3 border-t border-gray-200">
               <View className="items-center">
-                <Text className="text-lg font-bold text-black">12</Text>
-                <Text className="text-xs text-gray-500">Items Donated</Text>
+                <Text className="text-lg font-bold text-black">
+                  {soldDonatedCount}
+                </Text>
+                <Text className="text-xs text-gray-500">
+                  Items Donated/Sold
+                </Text>
               </View>
               <View className="items-center">
-                <Text className="text-lg font-bold text-black">4.8</Text>
+                <Text className="text-lg font-bold text-black">
+                  {averageRating || "-"}
+                </Text>
                 <Text className="text-xs text-gray-500">Rating</Text>
               </View>
               <View className="items-center">
-                <Text className="text-lg font-bold text-black">98%</Text>
+                <Text className="text-lg font-bold text-black">
+                  {positivePercentage === 0 ? "-" : positivePercentage + "%"}
+                </Text>
                 <Text className="text-xs text-gray-500">Positive</Text>
               </View>
             </View>

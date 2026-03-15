@@ -101,6 +101,7 @@ export interface TransactionRequest {
   item_id: string;
   status: "pending" | "approved" | "rejected" | "completed";
   created_at: string;
+  updated_at: string;
   item?: ListedItem;
   buyer?: User;
   seller?: User;

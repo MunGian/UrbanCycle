@@ -30,11 +30,6 @@ const ReviewBottomSheet: React.FC<ReviewBottomSheetProps> = ({
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (rating === 0) {
-      Alert.alert("Error", "Please select a rating");
-      return;
-    }
-
     setSubmitting(true);
     try {
       await submitReview({

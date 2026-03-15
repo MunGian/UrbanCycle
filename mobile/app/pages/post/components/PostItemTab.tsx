@@ -422,7 +422,6 @@ const PostItemTab: React.FC<PostItemTabProps> = ({
                   multiline
                   textAlignVertical="top"
                   value={description}
-                  maxLength={10}
                   onChangeText={setDescription}
                   onFocus={() => setIsDescriptionFocused(true)}
                   onBlur={() => setIsDescriptionFocused(false)}

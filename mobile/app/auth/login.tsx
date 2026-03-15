@@ -238,7 +238,7 @@ const Login: React.FC = () => {
           }`}
         >
           {loading ? (
-            <ActivityIndicator className="h-8 w-8" size="large" color="#fff" />
+            <ActivityIndicator className="h-8 w-8" size={28} color="#fff" />
           ) : (
             <Text className="text-white text-lg font-medium">Login Now</Text>
           )}

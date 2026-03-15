@@ -4,7 +4,7 @@ import { ListedItem } from "@/lib/api/apiModel";
 import { formatLocalDateTime } from "@/lib/constants/commonConst";
 import { useUserStore } from "@/lib/zustand/useUserStore";
 import React, { useCallback, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import PostTabs from "./components/PostTabs";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Route } from "@/lib/utils/routes";
@@ -68,6 +68,14 @@ const PostPage: React.FC = () => {
 
   if (!user) {
     return <AuthPlaceholder />;
+  }
+
+  if (isMounting) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color="#2c323d" />
+      </View>
+    );
   }
 
   return (

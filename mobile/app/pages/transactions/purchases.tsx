@@ -1,5 +1,6 @@
 import { getBuyerRequests } from "@/lib/api/api";
 import { MarketplaceItem, TransactionRequest } from "@/lib/api/apiModel";
+import { supabase } from "@/lib/utils/supabase";
 import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -45,6 +46,60 @@ const PurchasesPage: React.FC = () => {
 
   const navigateToItemDetailsPage = (item: MarketplaceItem) => {
     (navigation as any).navigate("pages/itemDetails", { item });
+  };
+
+  const onButtonClick = async (status: string, item: MarketplaceItem) => {
+    if (status === "approved") {
+      if (!user || !item.user) return;
+
+      try {
+        const { data: rooms, error: fetchError } = await supabase
+          .from("message_room")
+          .select("*")
+          .or(
+            `and(user1_id.eq.${user.id},user2_id.eq.${item.user.id}),and(user1_id.eq.${item.user.id},user2_id.eq.${user.id})`,
+          );
+
+        if (fetchError) throw fetchError;
+
+        let roomId;
+
+        if (rooms && rooms.length > 0) {
+          roomId = rooms[0].id;
+        } else {
+          // Create new room
+          const { data: newRoom, error: createError } = await supabase
+            .from("message_room")
+            .insert({
+              user1_id: user.id,
+              user2_id: item.user.id,
+            })
+            .select()
+            .single();
+
+          if (createError) throw createError;
+          roomId = newRoom.id;
+        }
+
+        (navigation as any).navigate("pages/messageRoom", {
+          chatId: roomId,
+          name: `${item.user.first_name} ${item.user.last_name}`,
+          avatar: item.user.avatar_url,
+          itemName: item.listed_item.title,
+          isOnline: "false",
+        });
+      } catch (error) {
+        console.error("Error initiating chat:", error);
+        Alert.alert("Error", "Could not start chat. Please try again.");
+      }
+    } else if (status === "completed") {
+      (navigation as any).navigate("(tabs)", {
+        screen: "post",
+        params: {
+          screen: "History",
+        },
+      });
+    }
   };
 
   if (loading) {
@@ -166,6 +221,26 @@ const PurchasesPage: React.FC = () => {
                     Transaction completed! View details and review in History
                     tab.
                   </Text>
+                </View>
+              )}
+
+              {req.status === "approved" && (
+                <View className="flex-row justify-end mt-3">
+                  <TouchableOpacity
+                    onPress={() =>
+                      onButtonClick(req.status, {
+                        user: req.seller!,
+                        listed_item: req.item!,
+                      })
+                    }
+                    className="bg-black px-6 py-2 rounded-full"
+                  >
+                    <Text className="text-white text-sm font-bold">
+                      {req.status === "approved"
+                        ? "Message Seller"
+                        : "Leave Review"}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </View>

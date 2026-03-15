@@ -115,11 +115,6 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
     if (!revieweeId) return;
 
     try {
-      const review = await getTransactionReview(transaction.id, user.id);
-      if (review) {
-        Alert.alert("Info", `You have already reviewed ${revieweeName}.`);
-        return;
-      }
       SooBottomSheet.push({
         title: `Review ${revieweeName}`,
         child: (
@@ -157,7 +152,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
         key={`trans-${transaction.id}`}
         className="bg-white border border-gray-100 rounded-2xl p-4 mb-4 shadow-sm"
       >
-        <View className="flex-row mb-3 justify-between items-center">
+        <View className="flex-row mb-1 justify-between items-center">
           <View className="flex-row items-center">
             <Text className="text-sm font-bold text-gray-800 mr-2">
               {isSeller ? "Sold to" : "Bought from"}
@@ -170,6 +165,10 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
             <Text className="text-xs font-bold text-green-600">COMPLETED</Text>
           </View>
         </View>
+
+        <Text className="text-sm text-gray-500 mb-1">
+          {new Date(transaction.updated_at).toLocaleString()}
+        </Text>
 
         <View className="flex-row bg-gray-50 p-3 rounded-lg mb-3">
           {itemData?.images && (
