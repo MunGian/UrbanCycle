@@ -224,7 +224,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
       ) : (
         historyList.map(renderItem)
       )}
-      <View className="h-20" />
+      <View className="h-32" />
     </ScrollView>
   );
 };
