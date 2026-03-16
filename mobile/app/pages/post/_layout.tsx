@@ -38,6 +38,7 @@ const PostPage: React.FC = () => {
       description: item.description,
       price: item?.is_free ? 0 : item.price,
       status: item.status,
+      is_free: item.is_free,
       date: formatLocalDateTime(item.created_at!),
       images: item.images && item.images.length > 0 ? item.images : "",
     }));

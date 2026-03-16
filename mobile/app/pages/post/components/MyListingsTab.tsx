@@ -68,13 +68,14 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
   };
 
   const handleChangeStatus = (item: ListedItem) => {
-    const options = [
+    let options = [
       { label: "Active", value: "Active" },
       { label: "Reserved", value: "Reserved" },
       { label: "Sold", value: "Sold" },
     ];
     if (item?.is_free) {
-      options.splice(1, 0, { label: "Donated", value: "Donated" });
+      options = options.filter((option) => option.value !== "Sold");
+      options.splice(2, 0, { label: "Donated", value: "Donated" });
     }
 
     SooBottomSheet.push({
@@ -110,8 +111,6 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
                           await onRefresh();
 
                           if (user && transaction.buyer) {
-                            // Close current sheet first? SooBottomSheet.push adds to stack.
-                            // We might want to delay slightly.
                             setTimeout(() => {
                               SooBottomSheet.push({
                                 title: `Rate ${transaction.buyer.first_name}`,
@@ -120,9 +119,7 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
                                     transactionId={transaction.id}
                                     reviewerId={user.id}
                                     revieweeId={transaction.buyer.id}
-                                    onReviewSubmitted={() => {
-                                      // SooBottomSheet.pop(); // Handled inside component
-                                    }}
+                                    onReviewSubmitted={() => {}}
                                   />
                                 ),
                               });
@@ -136,7 +133,6 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
                 }
               }
 
-              // Standard update for other statuses or if no transaction found
               await updateItem(item.id!, { status: value });
               await onRefresh();
             } catch (error) {

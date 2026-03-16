@@ -21,8 +21,6 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { Route } from "@/lib/utils/routes";
 
 const ItemDetailsPage: React.FC = () => {
   const route = useRoute();
@@ -34,7 +32,6 @@ const ItemDetailsPage: React.FC = () => {
   const [positivePercentage, setPositivePercentage] = useState<number>(0);
 
   const item: MarketplaceItem = route.params?.item;
-  console.log("Item details route params:", route.params?.item);
 
   const { width } = Dimensions.get("window");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -97,7 +94,7 @@ const ItemDetailsPage: React.FC = () => {
     fetchStats();
   }, [item]);
 
-  const onUnloginAlert = () => {
+  const onUnloginAlert = (description: string) => {
     SooBottomSheet.push({
       needPadding: false,
       isDismissible: false,
@@ -105,10 +102,12 @@ const ItemDetailsPage: React.FC = () => {
       child: (
         <AlertModal
           title="Please login"
-          description="You need to be logged in to send a message."
+          description={description}
           status="failed"
+          confirmText="Go to Login"
           onClose={() => {
             SooBottomSheet.pop();
+            (navigation as any).navigate("auth");
           }}
         />
       ),
@@ -117,7 +116,7 @@ const ItemDetailsPage: React.FC = () => {
 
   const handleContactDonor = async () => {
     if (!user) {
-      onUnloginAlert();
+      onUnloginAlert("You need to be logged in to send a message.");
       return;
     }
 
@@ -166,7 +165,6 @@ const ItemDetailsPage: React.FC = () => {
         setMessage("");
       }
 
-      // Navigate to chat room
       (navigation as any).navigate("pages/messageRoom", {
         chatId: roomId,
         name: `${item.user.first_name} ${item.user.last_name}`,
@@ -182,7 +180,7 @@ const ItemDetailsPage: React.FC = () => {
 
   const handleAddToCart = async () => {
     if (!user) {
-      onUnloginAlert();
+      onUnloginAlert("You need to be logged in to add items to your cart.");
       return;
     }
 
@@ -362,7 +360,7 @@ const ItemDetailsPage: React.FC = () => {
               </View>
               <View className="items-center">
                 <Text className="text-lg font-bold text-black">
-                  {averageRating || "-"}
+                  {averageRating === 0 ? "-" : averageRating.toFixed(1)}
                 </Text>
                 <Text className="text-xs text-gray-500">Rating</Text>
               </View>

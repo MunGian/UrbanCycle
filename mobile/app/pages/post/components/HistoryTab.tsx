@@ -185,7 +185,11 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ soldItems, onRefresh }) => {
             <Text className="font-bold text-black text-base">
               {itemData?.title}
             </Text>
-            <Text className="text-gray-600 text-sm">RM {itemData?.price}</Text>
+            <Text
+              className={`text-sm font-medium ${itemData?.is_free ? "text-green-700" : "text-gray-500"}`}
+            >
+              {itemData?.is_free ? "Free" : `RM ${itemData?.price}`}
+            </Text>
           </View>
         </View>
 
