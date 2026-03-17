@@ -154,11 +154,8 @@ const MessagePage: React.FC = () => {
   return (
     <View className="flex h-full w-full bg-white">
       <View className="px-4 pt-4 pb-4 border-b border-gray-100">
-        <View className="flex-row items-center justify-between mb-3">
+        <View className="flex-row items-center justify-between mb-5">
           <Text className="text-2xl font-bold text-black">Messages</Text>
-          <TouchableOpacity className="p-2">
-            <MaterialIcons name="more-vert" size={24} color="black" />
-          </TouchableOpacity>
         </View>
 
         <View

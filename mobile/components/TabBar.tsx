@@ -7,8 +7,12 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { TabBarButton } from "./TabBarButton";
+import { useUserStore } from "@/lib/zustand/useUserStore";
+import { SooBottomSheet } from "./SooBottomSheetProvider";
+import AlertModal from "./AlertModal";
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const user = useUserStore((s) => s.user);
   const [dimensions, setDimensions] = useState({ width: 20, height: 100 });
   const buttonWidth = dimensions.width / state.routes.length;
   const tabPositionX = useSharedValue(0);
@@ -29,6 +33,25 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       duration: 600,
     });
   }, [state.index]);
+
+  const onUnloginAlert = () => {
+    SooBottomSheet.push({
+      needPadding: false,
+      isDismissible: true,
+      child: (
+        <AlertModal
+          title="Please login"
+          description="You need to be logged in to access this feature."
+          status="failed"
+          confirmText="Go to Login"
+          onClose={() => {
+            SooBottomSheet.pop();
+            (navigation as any).navigate("auth");
+          }}
+        />
+      ),
+    });
+  };
 
   return (
     <View onLayout={onTabbarLayout} style={styles.tabBar}>
@@ -57,6 +80,10 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         const isFocused = state.index === index;
 
         const onPress = () => {
+          if (!user) {
+            onUnloginAlert();
+            return;
+          }
           const event = navigation.emit({
             type: "tabPress",
             target: route.key,
