@@ -40,10 +40,12 @@ class BottomSheetController {
   pop() {
     const stack = this.getCurrentStack?.();
     if (!stack || stack.length === 0) return;
-    const topId = stack[stack.length - 1].id;
+    const topSheet = stack[stack.length - 1];
 
-    this.markClosing?.(topId);
-    setTimeout(() => this.removeSheet?.(topId), 150);
+    if (topSheet.isClosing) return;
+
+    this.markClosing?.(topSheet.id);
+    setTimeout(() => this.removeSheet?.(topSheet.id), 150);
   }
 
   popAll() {
