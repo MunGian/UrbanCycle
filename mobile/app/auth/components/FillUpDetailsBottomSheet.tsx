@@ -17,10 +17,6 @@ const FillUpDetailsBottomSheet: React.FC = () => {
   const [isLastNameFocused, setIsLastNameFocused] = useState<boolean>(false);
 
   const onContinuePress = async () => {
-    if (!firstName || !lastName) {
-      Alert.alert("Missing info", "Please enter your first and last name.");
-      return;
-    }
     const profile = await insertUserName(firstName, lastName);
     await setUser(profile!);
     SooBottomSheet.pop();

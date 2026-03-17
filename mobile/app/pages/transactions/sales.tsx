@@ -4,7 +4,7 @@ import { getSellerRequests, updateRequestStatus } from "@/lib/api/api";
 import { MarketplaceItem, TransactionRequest } from "@/lib/api/apiModel";
 import { supabase } from "@/lib/utils/supabase";
 import { useUserStore } from "@/lib/zustand/useUserStore";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import {
@@ -142,11 +142,8 @@ const SalesPage: React.FC = () => {
   return (
     <View className="flex-1 bg-white">
       <View className="px-4 pt-4 pb-2 border-b border-gray-100 flex-row items-center">
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className="p-2 mr-2 rounded-full bg-gray-50"
-        >
-          <MaterialIcons name="arrow-back" size={24} color="black" />
+        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-5">
+          <Feather name="arrow-left" size={26} color="black" />
         </TouchableOpacity>
         <Text className="text-2xl font-bold text-black">Incoming Requests</Text>
       </View>

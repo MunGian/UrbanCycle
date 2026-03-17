@@ -232,13 +232,16 @@ const HomePage: React.FC = () => {
           </View>
 
           <View className="flex-row items-center gap-2">
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search items..."
-              className="flex-1 bg-gray-100 px-4 py-3 rounded-full border border-gray-300 text-black"
-              placeholderTextColor="#9CA3AF"
-            />
+            <View className="flex-row flex-1 items-center bg-gray-100 px-4 py-0.5 rounded-full border border-gray-300 text-black">
+              <MaterialIcons name="search" size={22} color="#9CA3AF" />
+              <TextInput
+                className="flex-1 ml-2"
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search items"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
             <TouchableOpacity
               onPress={onCategoryClicked}
               className="p-3 rounded-3xl bg-gray-50 border border-gray-300"

@@ -81,7 +81,7 @@ const PostPage: React.FC = () => {
 
   return (
     <View className="flex h-full w-full bg-white">
-      <View className="flex flex-row justify-between px-6 pt-6 pb-2 bg-white">
+      <View className="flex flex-row justify-between px-4 pt-4 pb-4 bg-white">
         <Text className="text-2xl font-bold text-black">List Items</Text>
         <TouchableOpacity
           onPress={navigateToCartPage}

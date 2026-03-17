@@ -153,8 +153,7 @@ const MessagePage: React.FC = () => {
 
   return (
     <View className="flex h-full w-full bg-white">
-      {/* Header */}
-      <View className="px-4 pt-4 pb-2 border-b border-gray-100">
+      <View className="px-4 pt-4 pb-4 border-b border-gray-100">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-2xl font-bold text-black">Messages</Text>
           <TouchableOpacity className="p-2">
@@ -162,9 +161,8 @@ const MessagePage: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Search Bar */}
         <View
-          className={`flex-row items-center bg-gray-100 rounded-full px-4 py-1.5 border ${isSearchFocused ? "border-black" : "border-transparent"}`}
+          className={`flex-row items-center bg-gray-100 rounded-full px-4 py-0.5 border ${isSearchFocused ? "border-black" : "border-gray-300"}`}
         >
           <MaterialIcons name="search" size={22} color="#9CA3AF" />
           <TextInput
@@ -173,7 +171,7 @@ const MessagePage: React.FC = () => {
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
             placeholder="Search conversations"
-            className="flex-1 ml-2 text-base text-black"
+            className="flex-1 ml-2"
             placeholderTextColor="#9CA3AF"
           />
           {searchQuery.length > 0 && (

@@ -89,10 +89,6 @@ const Login: React.FC = () => {
   };
 
   const logInWithEmail = async () => {
-    if (!email || !password) {
-      Alert.alert("Missing Info", "Please enter both email and password.");
-      return;
-    }
     setLoading(true);
 
     try {

@@ -5,7 +5,7 @@ import ReportTabs from "./components/ReportTabs";
 const ReportPage: React.FC = () => {
   return (
     <View className="flex h-full w-full bg-white">
-      <View className="px-6 pt-6 pb-4 bg-white">
+      <View className="px-4 pt-4 pb-4 bg-white">
         <Text className="text-2xl font-bold text-black">Waste Reporting</Text>
       </View>
       <View className="flex-1">
