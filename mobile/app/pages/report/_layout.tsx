@@ -11,7 +11,6 @@ const ReportPage: React.FC = () => {
       <View className="flex-1">
         <ReportTabs />
       </View>
-      <View className="h-24" />
     </View>
   );
 };

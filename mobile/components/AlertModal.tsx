@@ -31,12 +31,12 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
       <Text className="text-2xl font-bold text-gray-900 mb-2 text-center">
         {title}
       </Text>
-      <Text className="text-gray-500 text-center mb-8 leading-6 text-base">
+      <Text className="text-gray-500 text-center leading-6 text-base">
         {description}
       </Text>
       <TouchableOpacity
         onPress={onClose}
-        className="w-full bg-black py-4 rounded-full items-center active:opacity-90 shadow-sm"
+        className="w-full bg-black py-4 rounded-full items-center active:opacity-90 shadow-sm mt-6"
       >
         <Text className="text-white font-bold text-lg">{confirmText}</Text>
       </TouchableOpacity>

@@ -97,8 +97,7 @@ const ItemDetailsPage: React.FC = () => {
   const onUnloginAlert = (description: string) => {
     SooBottomSheet.push({
       needPadding: false,
-      isDismissible: false,
-      needCloseButton: false,
+      isDismissible: true,
       child: (
         <AlertModal
           title="Please login"

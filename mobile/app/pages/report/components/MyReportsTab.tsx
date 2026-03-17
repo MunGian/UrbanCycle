@@ -349,6 +349,7 @@ const MyReportsTab: React.FC = () => {
             </View>
           )}
         </View>
+        <View className="h-24" />
       </ScrollView>
 
       {/* Full Screen Image Modal */}
