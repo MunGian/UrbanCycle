@@ -43,16 +43,20 @@ const HomePage: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
-      if (user === undefined) return;
       loadItems();
-    }, [user]),
+    }, []),
   );
 
   const loadItems = async () => {
-    setIsLoading(true);
-    const items = await fetchMarketplaceItems();
-    setMarketplaceData(items);
-    setIsLoading(false);
+    try {
+      setIsLoading(true);
+      const items = await fetchMarketplaceItems();
+      setMarketplaceData(items);
+    } catch (e) {
+      console.error("Failed to load items", e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const onRefresh = async () => {
