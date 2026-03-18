@@ -89,6 +89,7 @@ const Login: React.FC = () => {
   };
 
   const logInWithEmail = async () => {
+    Keyboard.dismiss();
     setLoading(true);
 
     try {
