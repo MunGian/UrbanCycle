@@ -5,6 +5,8 @@ import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import React, { useState } from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 import SignUpPasswordBottomSheet from "./SignUpPasswordBottomSheet";
+import PrivacyPolicyBottomSheet from "./PrivacyPolicyBottomSheet";
+import TermsOfServiceBottomSheet from "./TermsOfServiceBottomSheet";
 
 const SignUpEmailBottomSheet: React.FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -44,7 +46,6 @@ const SignUpEmailBottomSheet: React.FC = () => {
   );
 
   const isLoginDisabled = email.length === 0 || !isEmailValid;
-  console.log("isLoginDisabled", isLoginDisabled);
 
   return (
     <View className="flex flex-col mt-2">
@@ -91,9 +92,17 @@ const SignUpEmailBottomSheet: React.FC = () => {
         emClassName="text-blue-600 font-semibold"
         onEmphasizedPress={(emText) => {
           if (emText === "Terms of Service") {
-            console.log("Open Terms of Service");
+            SooBottomSheet.push({
+              title: "Terms of Service",
+              child: <TermsOfServiceBottomSheet />,
+              needPadding: true,
+            });
           } else if (emText === "Privacy Policy") {
-            console.log("Open Privacy Policy");
+            SooBottomSheet.push({
+              title: "Privacy Policy",
+              child: <PrivacyPolicyBottomSheet />,
+              needPadding: true,
+            });
           }
         }}
       />
@@ -107,13 +116,7 @@ const SignUpEmailBottomSheet: React.FC = () => {
       >
         <Text className="text-white text-lg font-medium">Next</Text>
       </TouchableOpacity>
-      <View
-        className="h-12"
-        // style={{
-        //   height: isEmailFocused ? screenHeight * 0.4 : screenHeight * 0.4,
-        // }}
-        // className={`transition-all duration-500`}
-      />
+      <View className="h-12" />
     </View>
   );
 };

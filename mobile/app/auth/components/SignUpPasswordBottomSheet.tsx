@@ -1,13 +1,11 @@
 import EmphasizedText from "@/components/EmphasizedText";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
-import { Route } from "@/lib/utils/routes";
 import { supabase } from "@/lib/utils/supabase";
 import { Feather } from "@expo/vector-icons";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Dimensions,
+  ActivityIndicator,
   Platform,
   Text,
   TouchableOpacity,
@@ -15,8 +13,8 @@ import {
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import AlertModal from "@/components/AlertModal";
-
-const { height: screenHeight } = Dimensions.get("window");
+import PrivacyPolicyBottomSheet from "./PrivacyPolicyBottomSheet";
+import TermsOfServiceBottomSheet from "./TermsOfServiceBottomSheet";
 
 interface SignUpPasswordBottomSheetProps {
   email?: string;
@@ -25,7 +23,6 @@ interface SignUpPasswordBottomSheetProps {
 const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
   email,
 }) => {
-  const router = useRouter();
   const [password, setPassword] = useState<string>("");
   const [isPasswordFocused, setIsPasswordFocused] = useState<boolean>(false);
   const [isPasswordValid, setIsPasswordValid] = useState<boolean>(true);
@@ -243,9 +240,17 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
           emClassName="text-blue-600 font-semibold"
           onEmphasizedPress={(emText) => {
             if (emText === "Terms of Service") {
-              console.log("Open Terms of Service");
+              SooBottomSheet.push({
+                title: "Terms of Service",
+                child: <TermsOfServiceBottomSheet />,
+                needPadding: true,
+              });
             } else if (emText === "Privacy Policy") {
-              console.log("Open Privacy Policy");
+              SooBottomSheet.push({
+                title: "Privacy Policy",
+                child: <PrivacyPolicyBottomSheet />,
+                needPadding: true,
+              });
             }
           }}
         />
@@ -258,7 +263,11 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
           }`}
         >
           <Text className="text-white text-lg font-medium">
-            {loading ? "Loading..." : "Next"}
+            {loading ? (
+              <ActivityIndicator className="h-8 w-8" size={28} color="#fff" />
+            ) : (
+              "Next"
+            )}
           </Text>
         </TouchableOpacity>
         <View className="h-12" />

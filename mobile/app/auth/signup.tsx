@@ -13,7 +13,9 @@ import {
 import AppLogo from "@/assets/images/inAppIconUse.png";
 import EmphasizedText from "@/components/EmphasizedText";
 import { SooBottomSheet } from "@/components/SooBottomSheetProvider";
+import PrivacyPolicyBottomSheet from "./components/PrivacyPolicyBottomSheet";
 import SignUpEmailBottomSheet from "./components/SignUpEmailBottomSheet";
+import TermsOfServiceBottomSheet from "./components/TermsOfServiceBottomSheet";
 
 // Tells Supabase Auth to continuously refresh the session automatically if
 // the app is in the foreground. When this is added, you will continue to receive
@@ -121,9 +123,17 @@ const Signup: React.FC = () => {
           emClassName="text-blue-600 font-semibold"
           onEmphasizedPress={(emText) => {
             if (emText === "Terms of Service") {
-              console.log("Open Terms of Service");
+              SooBottomSheet.push({
+                title: "Terms of Service",
+                child: <TermsOfServiceBottomSheet />,
+                needPadding: true,
+              });
             } else if (emText === "Privacy Policy") {
-              console.log("Open Privacy Policy");
+              SooBottomSheet.push({
+                title: "Privacy Policy",
+                child: <PrivacyPolicyBottomSheet />,
+                needPadding: true,
+              });
             }
           }}
         />

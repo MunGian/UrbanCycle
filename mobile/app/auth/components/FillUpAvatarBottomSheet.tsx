@@ -5,7 +5,14 @@ import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
-import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { Route } from "@/lib/utils/routes";
 
@@ -14,7 +21,7 @@ const FillUpAvatarBottomSheet: React.FC = () => {
   const setUser = useUserStore((s) => s.setUser);
 
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<boolean>(false);
 
   const pickAvatarFromDevice = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -44,15 +51,11 @@ const FillUpAvatarBottomSheet: React.FC = () => {
     try {
       if (!avatarUri) return null;
 
-      setUploading(true);
-
       return await upsertAvatar(userId, avatarUri);
     } catch (err) {
       console.error("Avatar upload error:", err);
       Alert.alert("Error", "Failed to upload avatar");
       return null;
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -63,36 +66,45 @@ const FillUpAvatarBottomSheet: React.FC = () => {
       return;
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    setUploading(true);
 
-    if (!user) {
-      Alert.alert("Error", "User not authenticated");
-      return;
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const avatarUrl = await uploadAvatar(user.id);
+      if (!avatarUrl) {
+        throw new Error("Avatar upload failed");
+      }
+
+      const { error } = await supabase
+        .from("user")
+        .update({
+          avatar_url: avatarUrl,
+        })
+        .eq("id", user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      const profile = await fetchUserProfile(user.id);
+      setUser(profile);
+
+      SooBottomSheet.popAll();
+      router.push(Route.HomePage);
+    } catch (error: any) {
+      console.error("Save avatar error:", error);
+      Alert.alert("Error", error.message || "Failed to save avatar");
+    } finally {
+      setUploading(false);
     }
-
-    const avatarUrl = await uploadAvatar(user.id);
-    if (!avatarUrl) return;
-
-    const { error } = await supabase
-      .from("user")
-      .update({
-        avatar_url: avatarUrl,
-      })
-      .eq("id", user.id);
-
-    if (error) {
-      Alert.alert("Error", "Failed to save avatar");
-      return;
-    }
-
-    const profile = await fetchUserProfile(user.id);
-    setUser(profile);
-    SooBottomSheet.popAll();
-    router.push(Route.HomePage);
   };
-
   return (
     <View className="flex items-center mt-2">
       {/* Heading */}
@@ -134,7 +146,11 @@ const FillUpAvatarBottomSheet: React.FC = () => {
         <Text
           className={`text-lg font-medium ${uploading ? "text-white" : "text-white"}`}
         >
-          {uploading ? "Uploading..." : "Save"}
+          {uploading ? (
+            <ActivityIndicator className="h-8 w-8" size={28} color="#fff" />
+          ) : (
+            "Save"
+          )}
         </Text>
       </TouchableOpacity>
 

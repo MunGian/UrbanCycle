@@ -5,7 +5,14 @@ import { useUserStore } from "@/lib/zustand/useUserStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import React, { useState } from "react";
-import { Alert, Platform, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import FillUpAvatarBottomSheet from "./FillUpAvatarBottomSheet";
 
 const FillUpDetailsBottomSheet: React.FC = () => {
@@ -15,12 +22,17 @@ const FillUpDetailsBottomSheet: React.FC = () => {
   const [lastName, setLastName] = useState<string>("");
   const [isFirstNameFocused, setIsFirstNameFocused] = useState<boolean>(false);
   const [isLastNameFocused, setIsLastNameFocused] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const onContinuePress = async () => {
+    setLoading(true);
     const profile = await insertUserName(firstName, lastName);
     await setUser(profile!);
+    setLoading(false);
     SooBottomSheet.pop();
-    onOpenAvatarBottomSheet();
+    setTimeout(() => {
+      onOpenAvatarBottomSheet();
+    }, 1000);
   };
 
   const onOpenAvatarBottomSheet = () => {
@@ -38,7 +50,8 @@ const FillUpDetailsBottomSheet: React.FC = () => {
     [],
   );
 
-  const isContinueDisabled = firstName.length === 0 || lastName.length === 0;
+  const isContinueDisabled =
+    firstName.length === 0 || lastName.length === 0 || loading;
 
   return (
     <View className="flex flex-col mt-2">
@@ -55,7 +68,6 @@ const FillUpDetailsBottomSheet: React.FC = () => {
         }}
       />
       <View className="h-4" />
-      {/* First Name */}
       <View
         className={`flex flex-row w-full items-center justify-between bg-gray-100 rounded-xl px-4 py-1 gap-x-1 ${inputPaddingY}
               ${isFirstNameFocused ? "border border-black" : ""}`}
@@ -79,8 +91,6 @@ const FillUpDetailsBottomSheet: React.FC = () => {
         )}
       </View>
       <View className="h-4" />
-
-      {/* Last Name */}
       <View
         className={`flex flex-row w-full items-center justify-between bg-gray-100 rounded-xl px-4 py-1 gap-x-1 ${inputPaddingY}
               ${isLastNameFocused ? "border border-black" : ""}`}
@@ -111,7 +121,11 @@ const FillUpDetailsBottomSheet: React.FC = () => {
           isContinueDisabled ? "bg-black opacity-50" : "bg-black opacity-100"
         }`}
       >
-        <Text className="text-white text-lg font-medium">Next</Text>
+        {loading ? (
+          <ActivityIndicator className="h-8 w-8" size={28} color="#fff" />
+        ) : (
+          <Text className="text-white text-lg font-medium">Next</Text>
+        )}
       </TouchableOpacity>
       <View className="h-12" />
     </View>

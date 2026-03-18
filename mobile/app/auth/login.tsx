@@ -40,13 +40,13 @@ import {
 const Login: React.FC = () => {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isEmailFocused, setIsEmailFocused] = useState(false);
-  const [isEmailValid, setIsEmailValid] = useState(true);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  const [passwordVisibility, setPasswordVisibility] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [isEmailFocused, setIsEmailFocused] = useState<boolean>(false);
+  const [isEmailValid, setIsEmailValid] = useState<boolean>(true);
+  const [isPasswordFocused, setIsPasswordFocused] = useState<boolean>(false);
+  const [passwordVisibility, setPasswordVisibility] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const onInvalidCredential = () => {
     SooBottomSheet.push({

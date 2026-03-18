@@ -21,7 +21,7 @@ export const SooBottomSheetProvider = ({
 
   const markClosing = (id: number) =>
     setSheetStack((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, isClosing: true } : s))
+      prev.map((s) => (s.id === id ? { ...s, isClosing: true } : s)),
     );
 
   useEffect(() => {
