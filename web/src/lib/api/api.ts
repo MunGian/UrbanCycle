@@ -24,10 +24,18 @@ export const getReports = async () => {
     officer: string,
   ) => {
     try {
-      const { error } = await supabase
-        .from("reports")
-        .update({ status: newStatus, resolved_by: officer })
-        .eq("id", id);
+      const updates: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (newStatus === "Resolved") {
+        updates.resolved_by = officer;
+      } else {
+        updates.resolved_by = null;
+      }
+
+      const { error } = await supabase.from("reports").update(updates).eq("id", id);
 
       if (error) throw error;
     } catch (error) {

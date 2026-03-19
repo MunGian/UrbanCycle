@@ -65,16 +65,28 @@ export function ReportsPageClient({ initialReports }: ReportsPageClientProps) {
           ? `${user.first_name} ${user.last_name}`
           : "Admin Officer";
       await onReportStatusUpdate(id, newStatus, officer);
+
+      const newResolvedBy = newStatus === "Resolved" ? officer : undefined;
+      const newUpdatedAt = new Date().toISOString();
+
       setReports(
         reports.map((r) =>
-          r.id === id ? { ...r, status: newStatus, resolved_by: officer } : r,
+          r.id === id
+            ? {
+                ...r,
+                status: newStatus,
+                resolved_by: newResolvedBy,
+                updated_at: newUpdatedAt,
+              }
+            : r,
         ),
       );
       if (selectedReport && selectedReport.id === id) {
         setSelectedReport({
           ...selectedReport,
           status: newStatus,
-          resolved_by: officer,
+          resolved_by: newResolvedBy,
+          updated_at: newUpdatedAt,
         });
       }
     } catch (error) {
