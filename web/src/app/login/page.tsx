@@ -32,6 +32,13 @@ export default function LoginPage() {
           data: { session },
           error,
         } = await supabase.auth.getSession();
+
+        // If there is an error (like invalid token), explicitly sign out to clean clean local storage
+        if (error) {
+          console.warn("Session invalid, clearing auth state:", error.message);
+          await supabase.auth.signOut();
+        }
+
         if (session) {
           router.replace("/");
         }
@@ -115,14 +122,6 @@ export default function LoginPage() {
         <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-500/20 blur-[100px]" />
 
         <div className="relative z-10 p-12 text-white max-w-xl">
-          <div className="mb-8 relative h-16 w-16 overflow-hidden rounded-2xl bg-white shadow-xl flex items-center justify-center">
-            <Image
-              src="/logo.png"
-              alt="UrbanCycle Logo"
-              fill
-              className="object-contain p-1"
-            />
-          </div>
           <h1 className="text-4xl font-bold tracking-tight mb-6 leading-tight">
             Manage your city&apos;s waste efficiently with{" "}
             <span className="text-emerald-400">UrbanCycle</span>
@@ -187,28 +186,29 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right side - Login Form */}
       <div className="flex-1 flex items-center justify-center p-6 bg-gray-50">
         <div className="w-full max-w-[420px] animate-in fade-in slide-in-from-right-8 duration-700">
-          <div className="lg:hidden flex justify-center mb-8">
-            <div className="relative h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center overflow-hidden">
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                fill
-                className="object-contain p-1"
-              />
-            </div>
-          </div>
-
           <Card className="border-0 shadow-none bg-transparent">
-            <CardHeader className="text-center pb-8 p-0">
-              <CardTitle className="text-3xl font-bold tracking-tight text-gray-900">
-                Welcome back
-              </CardTitle>
-              <CardContent className="text-gray-500 mt-2 text-base">
-                Sign in to your account to continue
-              </CardContent>
+            <CardHeader className="mb-6 p-0">
+              <div className="flex items-center gap-4">
+                <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-white shadow-xl flex items-center justify-center">
+                  <Image
+                    src="/logo.png"
+                    alt="UrbanCycle Logo"
+                    fill
+                    sizes="64px"
+                    className="object-contain p-1"
+                  />
+                </div>
+                <div>
+                  <CardTitle className="text-3xl font-bold tracking-tight text-gray-900">
+                    Welcome back
+                  </CardTitle>
+                  <CardContent className="text-gray-500 mt-1 text-base p-0">
+                    Sign in to your account to continue
+                  </CardContent>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <form onSubmit={handleLogin} className="space-y-5">
@@ -259,7 +259,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                      className="cursor-pointer absolute right-3 top-3 text-gray-400 hover:text-gray-600 focus:outline-none"
                     >
                       {showPassword ? (
                         <EyeOff className="h-5 w-5" />
@@ -293,7 +293,7 @@ export default function LoginPage() {
                   type="submit"
                   disabled={loading}
                   className={cn(
-                    "group relative inline-flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-gray-900 px-8 py-3 font-medium text-white transition-all duration-300 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50 disabled:hover:bg-gray-900",
+                    "cursor-pointer group relative inline-flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-gray-900 px-8 py-3 font-medium text-white transition-all duration-300 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50 disabled:hover:bg-gray-900",
                     "shadow-lg shadow-gray-900/20 hover:shadow-gray-600/30",
                   )}
                 >

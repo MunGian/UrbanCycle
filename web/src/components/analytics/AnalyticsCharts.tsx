@@ -40,30 +40,31 @@ export function AnalyticsCharts({ reports }: AnalyticsChartsProps) {
 
   const trendMap = new Map<string, number>();
 
-  reports.forEach((r) => {
-    const date = new Date(r.created_at).toLocaleDateString("en-US", {
-      weekday: "short",
+  // Initialize with last 7 days
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
     });
-    trendMap.set(date, (trendMap.get(date) || 0) + 1);
+    trendMap.set(dateStr, 0);
+  }
+
+  reports.forEach((r) => {
+    const date = new Date(r.created_at).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+    });
+    if (trendMap.has(date)) {
+      trendMap.set(date, (trendMap.get(date) || 0) + 1);
+    }
   });
 
-  const trendData =
-    reports.length > 3
-      ? Array.from(trendMap.entries())
-          .map(([name, count]) => ({
-            name,
-            count,
-          }))
-          .reverse()
-      : [
-          { name: "Mon", count: 12 },
-          { name: "Tue", count: 18 },
-          { name: "Wed", count: 15 },
-          { name: "Thu", count: 25 },
-          { name: "Fri", count: 20 },
-          { name: "Sat", count: 32 },
-          { name: "Sun", count: 28 },
-        ];
+  const trendData = Array.from(trendMap.entries()).map(([name, count]) => ({
+    name,
+    count,
+  }));
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {

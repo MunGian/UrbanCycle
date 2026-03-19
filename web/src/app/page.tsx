@@ -3,7 +3,14 @@
 import { ReportManagement } from "@/app/reports/components/ReportManagement";
 import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts";
 import { Report } from "@/lib/api/apiModel";
-import { Activity, Clock, CheckCircle2, TrendingUp } from "lucide-react";
+import { penangLocations } from "@/lib/penangLocations";
+import {
+  Activity,
+  Clock,
+  CheckCircle2,
+  TrendingUp,
+  MapPin,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { getReports } from "@/lib/api/api";
@@ -70,30 +77,38 @@ export default function DashboardPage() {
     return d >= twoMonthsAgo && d < oneMonthAgo;
   }).length;
 
+  console.log("Reports in last 30 days:", reportsLast30Days);
+  console.log("Reports in previous 30 days:", reportsPrev30Days);
   const totalReportsChange =
     reportsPrev30Days > 0
       ? ((reportsLast30Days - reportsPrev30Days) / reportsPrev30Days) * 100
-      : 100;
+      : reportsLast30Days > 0
+        ? 100
+        : 0;
 
-  const getResolutionRate = (reportList: Report[]) => {
-    const total = reportList.length;
-    const resolved = reportList.filter((r) => r.status === "Resolved").length;
-    return total > 0 ? (resolved / total) * 100 : 0;
-  };
+  // Calculate top reported locations based on Penang areas
+  const locationCounts = reports.reduce(
+    (acc, report) => {
+      const loc = report.location || "";
+      // Find which Penang location matches this reports location string
+      // Sort penang locations by length (descending) to match specific locations first (e.g. "Bayan Baru" before "Bayan") if overlapping
+      // But assuming distinct enough lists.
+      const matchedLocation =
+        penangLocations.find((place) => loc.includes(place)) || "Other";
 
-  const reportsLast7Days = reports.filter((r) => {
-    const d = new Date(r.created_at);
-    return d >= oneWeekAgo && d <= now;
-  });
+      if (matchedLocation !== "Other") {
+        acc[matchedLocation] = (acc[matchedLocation] || 0) + 1;
+      }
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
-  const reportsPrev7Days = reports.filter((r) => {
-    const d = new Date(r.created_at);
-    return d >= twoWeeksAgo && d < oneWeekAgo;
-  });
+  const sortedLocations = Object.entries(locationCounts).sort(
+    (a, b) => b[1] - a[1],
+  );
 
-  const rateLast7Days = getResolutionRate(reportsLast7Days);
-  const ratePrev7Days = getResolutionRate(reportsPrev7Days);
-  const resolutionRateChange = rateLast7Days - ratePrev7Days;
+  const topLocations = sortedLocations.slice(0, 3);
 
   return (
     <div className="space-y-8 px-4 bg-gray-50/50 min-h-full">
@@ -131,7 +146,7 @@ export default function DashboardPage() {
             <div className="text-3xl font-bold text-gray-900">
               {totalReports}
             </div>
-            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+            <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
               <span
                 className={`${
                   totalReportsChange >= 0 ? "text-emerald-600" : "text-red-600"
@@ -140,7 +155,7 @@ export default function DashboardPage() {
                 {totalReportsChange > 0 ? "+" : ""}
                 {totalReportsChange.toFixed(1)}%
               </span>{" "}
-              from last month
+              vs last month
             </p>
           </CardContent>
         </Card>
@@ -158,7 +173,7 @@ export default function DashboardPage() {
             <div className="text-3xl font-bold text-gray-900">
               {pendingReports}
             </div>
-            <p className="text-xs text-gray-500 mt-1">Requires attention</p>
+            <p className="text-xs text-gray-500 mt-3">Requires attention</p>
           </CardContent>
         </Card>
 
@@ -175,36 +190,56 @@ export default function DashboardPage() {
             <div className="text-3xl font-bold text-gray-900">
               {resolvedReports}
             </div>
-            <p className="text-xs text-gray-500 mt-1">Completed this month</p>
+            <p className="text-xs text-gray-500 mt-3">Completed this month</p>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-md bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Resolution Rate
+              Top Active Areas
             </CardTitle>
             <div className="p-2 bg-purple-50 rounded-full">
-              <TrendingUp className="h-4 w-4 text-purple-600" />
+              <MapPin className="h-4 w-4 text-purple-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900">
-              {resolutionRate}%
+            <div className="space-y-4 md:space-y-3">
+              {topLocations.map(([location, count], index) => (
+                <div
+                  key={location}
+                  className="flex items-center justify-between text-sm group"
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full transition-colors ${
+                        index === 0
+                          ? "bg-purple-100 text-purple-700 group-hover:bg-purple-200"
+                          : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
+                      }`}
+                    >
+                      {index + 1}
+                    </span>
+                    <span
+                      className={`font-medium truncate max-w-[120px] ${
+                        index === 0 ? "text-gray-900" : "text-gray-700"
+                      }`}
+                      title={location}
+                    >
+                      {location}
+                    </span>
+                  </div>
+                  <span className="text-gray-500 text-xs font-medium bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
+                    {count} reports
+                  </span>
+                </div>
+              ))}
+              {topLocations.length === 0 && (
+                <div className="text-sm text-gray-500 py-2 text-center italic">
+                  No location data available
+                </div>
+              )}
             </div>
-            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-              <span
-                className={`${
-                  resolutionRateChange >= 0
-                    ? "text-emerald-600"
-                    : "text-red-600"
-                } font-medium`}
-              >
-                {resolutionRateChange > 0 ? "+" : ""}
-                {resolutionRateChange.toFixed(1)}%
-              </span>{" "}
-              from last week
-            </p>
           </CardContent>
         </Card>
       </div>
