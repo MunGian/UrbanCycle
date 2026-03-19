@@ -322,6 +322,19 @@ export const updateLastViewedCategory = async (
 
 /* -------------------- Transaction/Reservation Functions -------------------- */
 
+export const checkExistingRequest = async (buyerId: string, itemId: string) => {
+  const { data: existingRequest, error: existingError } = await supabase
+    .from("transactions")
+    .select("id")
+    .eq("buyer_id", buyerId)
+    .eq("item_id", itemId)
+    .eq("status", "pending")
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+  return !!existingRequest;
+};
+
 export const createReservationRequest = async (
   buyerId: string,
   sellerId: string,

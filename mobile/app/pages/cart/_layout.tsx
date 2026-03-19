@@ -4,6 +4,7 @@ import {
   getCartItems,
   removeFromCart,
   createReservationRequest,
+  checkExistingRequest,
 } from "@/lib/api/api";
 import { CartItem, MarketplaceItem } from "@/lib/api/apiModel";
 import { useUserStore } from "@/lib/zustand/useUserStore";
@@ -144,24 +145,68 @@ const CartPage: React.FC = () => {
         Alert.alert("Error", "User not found.");
         return;
       }
+      const duplicateItems: string[] = [];
+      const itemsToProcess = [];
+
       for (const item of selectedItems) {
         if (!item.originalItem?.listed_item.id || !item.originalItem.user.id) {
           console.error("Invalid item data:", item);
           continue;
         }
 
-        // Send request
-        await createReservationRequest(
+        const hasPending = await checkExistingRequest(
           user.id,
-          item.originalItem.user.id,
           item.originalItem.listed_item.id,
         );
 
-        // Remove from cart locally and remotely
-        await removeFromCart(item.id);
+        if (hasPending) {
+          duplicateItems.push(item.name);
+        } else {
+          itemsToProcess.push(item);
+        }
       }
 
-      setCartItems((prev) => prev.filter((item) => !item.selected));
+      if (duplicateItems.length > 0) {
+        SooBottomSheet.push({
+          child: (
+            <AlertModal
+              title="Request Already Sent"
+              description={`You already have pending requests for: ${duplicateItems.join(
+                ", ",
+              )}`}
+              status="failed"
+              onClose={() => SooBottomSheet.pop()}
+            />
+          ),
+        });
+        setLoading(false);
+        return;
+      }
+
+      const successfulItemIds: string[] = [];
+
+      for (const item of itemsToProcess) {
+        if (!user || !item.originalItem) return;
+        try {
+          await createReservationRequest(
+            user.id,
+            item.originalItem.user.id,
+            item.originalItem.listed_item.id,
+          );
+          await removeFromCart(item.id);
+          successfulItemIds.push(item.id);
+        } catch (err: any) {
+          console.error(
+            "Error creating reservation request for",
+            item.name,
+            err,
+          );
+        }
+      }
+
+      setCartItems((prev) =>
+        prev.filter((item) => !successfulItemIds.includes(item.id)),
+      );
 
       SooBottomSheet.push({
         child: (
