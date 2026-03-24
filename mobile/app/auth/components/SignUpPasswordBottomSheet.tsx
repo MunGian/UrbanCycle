@@ -62,14 +62,6 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
   const onContinuePress = async () => {
     if (!email || !password) return;
 
-    // // This handles both:
-    // // 1. Development (Expo Go): exp://...
-    // // 2. Production (Build): urbancycle://...
-    // const redirectUrl = Linking.createURL("/auth/callback", {
-    //   scheme: "urbancycle",
-    // });
-    // console.log("Redirect URL:", redirectUrl);
-
     setLoading(true);
     const {
       data: { user, session },
@@ -77,9 +69,6 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
     } = await supabase.auth.signUp({
       email: email,
       password: password,
-      // options: {
-      //   emailRedirectTo: redirectUrl,
-      // },
     });
     if (error) {
       SooBottomSheet.push({
@@ -100,7 +89,7 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
       });
       return;
     }
-    // Insert into User Table in DB
+
     if (user) {
       const { data: profile } = await supabase
         .from("user")
@@ -113,40 +102,6 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
 
     console.log("Sign up response:", { user, session, error });
     SooBottomSheet.popAll();
-
-    // if (session) {
-    //   // This block handles cases where email confirmation is OFF.
-    //   // If confirmation is ON, session will be null here.
-    //   console.log(
-    //     "Session created immediately (Email confirmation likely OFF)"
-    //   );
-    //   router.push(Route.HomePage);
-    //   return;
-    // }
-
-    // if (error) {
-    //   console.error("Sign up error:", error);
-    //   Alert.alert("Sign Up Failed", error.message);
-    //   setLoading(false);
-    //   return;
-    // }
-
-    // // Email confirmation is ON, and sign-up was successful.
-    // // Show alert and navigate to Login page to wait for verification.
-    // Alert.alert(
-    //   "Verification Email Sent",
-    //   "Please check your inbox to verify your account. Then log in.",
-    //   [
-    //     {
-    //       text: "OK",
-    //       onPress: () => {
-    //         // Close the bottom sheet and navigate to login
-    //         SooBottomSheet.popAll();
-    //         router.back();
-    //       },
-    //     },
-    //   ]
-    // );
     setLoading(false);
   };
 
