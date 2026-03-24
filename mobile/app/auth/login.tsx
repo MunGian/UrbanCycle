@@ -240,7 +240,7 @@ const Login: React.FC = () => {
             <Text className="text-white text-lg font-medium">Login Now</Text>
           )}
         </TouchableOpacity>
-        <View className="h-8" />
+        {/* <View className="h-8" />
         <View className="flex flex-row items-center w-full">
           <View className="flex-1 h-[1px] bg-gray-300" />
           <Text className="mx-4 text-base text-gray-500 text-center">
@@ -263,62 +263,10 @@ const Login: React.FC = () => {
             />
             <Text className="text-lg font-medium">Google</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </View>
     </TouchableWithoutFeedback>
-    // <View style={styles.container}>
-    //   <View style={[styles.verticallySpaced, styles.mt20]}>
-    //     <Input
-    //       label="Email"
-    //       leftIcon={{ type: "font-awesome", name: "envelope" }}
-    //       onChangeText={(text) => setEmail(text)}
-    //       value={email}
-    //       placeholder="email@address.com"
-    //       autoCapitalize={"none"}
-    //     />
-    //   </View>
-    //   <View style={styles.verticallySpaced}>
-    //     <Input
-    //       label="Password"
-    //       leftIcon={{ type: "font-awesome", name: "lock" }}
-    //       onChangeText={(text) => setPassword(text)}
-    //       value={password}
-    //       secureTextEntry={true}
-    //       placeholder="Password"
-    //       autoCapitalize={"none"}
-    //     />
-    //   </View>
-    //   <View style={[styles.verticallySpaced, styles.mt20]}>
-    //     <Button
-    //       title="Sign in"
-    //       disabled={loading}
-    //       onPress={() => signInWithEmail()}
-    //     />
-    //   </View>
-    //   <View style={styles.verticallySpaced}>
-    //     <Button
-    //       title="Sign up"
-    //       disabled={loading}
-    //       onPress={() => signUpWithEmail()}
-    //     />
-    //   </View>
-    // </View>
   );
 };
 
 export default Login;
-
-const styles = StyleSheet.create({
-  container: {
-    marginTop: 40,
-    padding: 12,
-  },
-  verticallySpaced: {
-    paddingTop: 4,
-    paddingBottom: 4,
-    alignSelf: "stretch",
-  },
-  mt20: {
-    marginTop: 20,
-  },
-});

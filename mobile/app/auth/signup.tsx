@@ -93,7 +93,7 @@ const Signup: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <View className="h-8" />
-        <View className="flex flex-row items-center w-full">
+        {/* <View className="flex flex-row items-center w-full">
           <View className="flex-1 h-[1px] bg-gray-300" />
           <Text className="mx-4 text-base text-gray-500 text-center">
             Or continue with
@@ -115,7 +115,8 @@ const Signup: React.FC = () => {
             />
             <Text className="text-lg font-medium">Google</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
+        <View className="h-[1px] bg-gray-300" />
         <View className="h-6" />
         <EmphasizedText
           text="By proceeding with this application, you acknowledge that you have read, understood, and agree to be bound by our <em>Terms of Service</em> and <em>Privacy Policy</em>."
