@@ -303,18 +303,10 @@ const MessageRoomPage: React.FC = () => {
 
           <View className="ml-3 flex-1">
             <Text className="text-base font-semibold text-black">{name}</Text>
-            <Text className="text-xs text-gray-500">
-              {isOnline === "true" ? "Online" : "Last seen recently"}
-            </Text>
           </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity className="p-2">
-          <MaterialIcons name="more-vert" size={22} color="black" />
         </TouchableOpacity>
       </View>
 
-      {/* Item Context Banner */}
       {itemName && (
         <View className="flex-row items-center bg-gray-50 px-4 py-2 border-b border-gray-100">
           <MaterialIcons name="inventory-2" size={18} color="#6B7280" />
