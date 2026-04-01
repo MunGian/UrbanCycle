@@ -220,8 +220,12 @@ const SalesPage: React.FC = () => {
                   <Text className="font-bold text-black text-base">
                     {req.item?.title}
                   </Text>
-                  <Text className="text-gray-600 text-sm">
-                    RM {req.item?.price}
+                  <Text
+                    className={`${req.item?.is_free ? "text-green-600" : "text-gray-600"} text-sm`}
+                  >
+                    {req.item?.is_free
+                      ? "Free"
+                      : `RM ${req.item?.price?.toFixed(2)}`}
                   </Text>
                 </View>
               </View>

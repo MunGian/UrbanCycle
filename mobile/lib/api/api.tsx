@@ -76,6 +76,7 @@ export const getCartItems = async (userId: string) => {
         location,
         category,
         is_free,
+        status,
         user:user_id (
           id,
           first_name,
@@ -85,7 +86,8 @@ export const getCartItems = async (userId: string) => {
       )
     `,
     )
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq("item.status", "Active");
 
   if (error) throw error;
 

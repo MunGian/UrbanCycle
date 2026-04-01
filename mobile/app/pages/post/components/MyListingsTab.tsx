@@ -166,7 +166,9 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
             if (value === "edit") {
               onEdit(item);
             } else if (value === "delete") {
-              handleDelete(item);
+              setTimeout(() => {
+                handleDelete(item);
+              }, 500);
             } else if (value === "status") {
               handleChangeStatus(item);
             }
