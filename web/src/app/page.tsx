@@ -2,15 +2,8 @@
 
 import { ReportManagement } from "@/app/reports/components/ReportManagement";
 import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts";
-import { Report } from "@/lib/api/apiModel";
 import { penangLocations } from "@/lib/penangLocations";
-import {
-  Activity,
-  Clock,
-  CheckCircle2,
-  TrendingUp,
-  MapPin,
-} from "lucide-react";
+import { Activity, Clock, CheckCircle2, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { getReports } from "@/lib/api/api";
@@ -37,7 +30,7 @@ export default function DashboardPage() {
     };
 
     fetchReports();
-  }, []);
+  }, [reports, setReports]);
 
   if (error) {
     console.error("Error fetching reports:", error);
@@ -57,34 +50,14 @@ export default function DashboardPage() {
   const totalReports = reports.length;
   const pendingReports = reports.filter((r) => r.status === "Pending").length;
   const resolvedReports = reports.filter((r) => r.status === "Resolved").length;
-  const resolutionRate =
-    totalReports > 0 ? Math.round((resolvedReports / totalReports) * 100) : 0;
 
-  // Calculate trends
+  // Calculate this month's total
   const now = new Date();
-  const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-
-  const reportsLast30Days = reports.filter((r) => {
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const reportsThisMonth = reports.filter((r) => {
     const d = new Date(r.created_at);
-    return d >= oneMonthAgo && d <= now;
+    return d >= startOfMonth && d <= now;
   }).length;
-
-  const reportsPrev30Days = reports.filter((r) => {
-    const d = new Date(r.created_at);
-    return d >= twoMonthsAgo && d < oneMonthAgo;
-  }).length;
-
-  console.log("Reports in last 30 days:", reportsLast30Days);
-  console.log("Reports in previous 30 days:", reportsPrev30Days);
-  const totalReportsChange =
-    reportsPrev30Days > 0
-      ? ((reportsLast30Days - reportsPrev30Days) / reportsPrev30Days) * 100
-      : reportsLast30Days > 0
-        ? 100
-        : 0;
 
   // Calculate top reported locations based on Penang areas
   const locationCounts = reports.reduce(
@@ -146,16 +119,11 @@ export default function DashboardPage() {
             <div className="text-3xl font-bold text-gray-900">
               {totalReports}
             </div>
-            <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
-              <span
-                className={`${
-                  totalReportsChange >= 0 ? "text-emerald-600" : "text-red-600"
-                } font-medium`}
-              >
-                {totalReportsChange > 0 ? "+" : ""}
-                {totalReportsChange.toFixed(1)}%
+            <p className="text-xs text-gray-500 mt-3">
+              <span className="text-sm font-bold text-gray-500">
+                {reportsThisMonth}
               </span>{" "}
-              vs last month
+              report(s) this month
             </p>
           </CardContent>
         </Card>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Users, LogOut, Map } from "lucide-react";
+import { LayoutDashboard, FileText, LogOut, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -34,7 +34,13 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col w-64 border-r border-gray-100 bg-white h-screen sticky top-0 left-0 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-20">
       <div className="p-6 flex items-center gap-3">
         <div className="relative h-9 w-9 overflow-hidden rounded-xl bg-emerald-100 flex items-center justify-center">
-          <Image src="/logo.png" alt="Logo" fill className="object-cover" />
+          <Image
+            src="/logo.png"
+            sizes="36px"
+            alt="Logo"
+            fill
+            className="object-cover"
+          />
         </div>
         <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
           UrbanCycle

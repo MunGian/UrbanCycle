@@ -145,6 +145,7 @@ export function Header() {
                       src={user.avatar_url}
                       alt="Avatar"
                       fill
+                      sizes="40px"
                       className="object-cover"
                     />
                   ) : (

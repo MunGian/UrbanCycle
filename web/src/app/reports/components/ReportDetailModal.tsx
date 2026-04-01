@@ -96,6 +96,7 @@ export function ReportDetailModal({
                     src={report.user.avatar_url || "/default-avatar.png"}
                     alt="User Avatar"
                     fill
+                    sizes="48px"
                     className="object-cover"
                   />
                 </div>

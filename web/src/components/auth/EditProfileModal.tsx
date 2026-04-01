@@ -181,6 +181,7 @@ export function EditProfileModal({
                         src={avatarUrl}
                         alt="Avatar"
                         fill
+                        sizes="96px"
                         className="object-cover"
                       />
                     ) : (
