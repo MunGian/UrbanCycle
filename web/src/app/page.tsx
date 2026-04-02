@@ -148,7 +148,7 @@ export default function DashboardPage() {
         <Card className="border-none shadow-md bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Resolved
+              Total Reports Resolved
             </CardTitle>
             <div className="p-2 bg-emerald-50 rounded-full">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -158,7 +158,13 @@ export default function DashboardPage() {
             <div className="text-3xl font-bold text-gray-900">
               {resolvedReports}
             </div>
-            <p className="text-xs text-gray-500 mt-3">Completed this month</p>
+            <p className="text-xs text-gray-500 mt-3">
+              Out of{" "}
+              <span className="text-sm font-bold text-gray-500">
+                {totalReports}
+              </span>{" "}
+              total reports
+            </p>
           </CardContent>
         </Card>
 
