@@ -17,17 +17,41 @@ import { useReportStore } from "@/lib/zustand/useReportStore";
 import { ReportDetailModal } from "@/app/reports/components/ReportDetailModal";
 import { useUserStore } from "@/lib/zustand/useUserStore";
 
-// Fix for default marker icon not showing
-const icon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+const markerShadowUrl =
+  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
+
+const markerIcons = {
+  Pending: L.icon({
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png",
+    iconRetinaUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png",
+    shadowUrl: markerShadowUrl,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  }),
+  "In Progress": L.icon({
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+    iconRetinaUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+    shadowUrl: markerShadowUrl,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  }),
+};
+
+const getMarkerIcon = (status: Report["status"]) => {
+  if (status === "Pending" || status === "In Progress") {
+    return markerIcons[status];
+  }
+
+  return markerIcons.Pending;
+};
 
 export default function ReportMap() {
   const user = useUserStore((state) => state.user);
@@ -116,7 +140,18 @@ export default function ReportMap() {
       : defaultCenter;
 
   return (
-    <div className="h-[calc(100vh-8rem)] w-full rounded-md overflow-hidden border">
+    <div className="relative h-[calc(100vh-8rem)] w-full rounded-md overflow-hidden border">
+      <div className="absolute left-3 top-3 z-[1000] rounded-md border bg-white/95 p-2 shadow-sm">
+        <p className="text-xs font-semibold text-slate-700">Report Status</p>
+        <div className="mt-1 flex items-center gap-2 text-xs text-slate-600">
+          <span className="h-3 w-3 rounded-full bg-yellow-500" />
+          <span>Pending</span>
+        </div>
+        <div className="mt-1 flex items-center gap-2 text-xs text-slate-600">
+          <span className="h-3 w-3 rounded-full bg-blue-500" />
+          <span>In Progress</span>
+        </div>
+      </div>
       <MapContainer
         center={center}
         zoom={13}
@@ -140,7 +175,7 @@ export default function ReportMap() {
           <Marker
             key={report.id}
             position={[Number(report.latitude), Number(report.longitude)]}
-            icon={icon}
+            icon={getMarkerIcon(report.status)}
           >
             <Popup className="min-w-[300px]">
               <Card className="border-0 shadow-none">
