@@ -5,7 +5,7 @@ import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -23,10 +23,28 @@ import MessageBubble from "./components/MessageBubble";
 
 const PAGE_SIZE = 20;
 
+const mergeMessagesById = (existing: Message[], incoming: Message[]) => {
+  const merged = new Map<string | number, Message>();
+
+  existing.forEach((msg) => {
+    merged.set(msg.id, msg);
+  });
+
+  incoming.forEach((msg) => {
+    merged.set(msg.id, msg);
+  });
+
+  return Array.from(merged.values()).sort(
+    (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
+};
+
 const MessageRoomPage: React.FC = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const scrollViewRef = useRef<ScrollView>(null);
+  const messagesRef = useRef<Message[]>([]);
   const { chatId, name, avatar, itemName, isOnline } = params;
   const user = useUserStore((s) => s.user);
   const hasOpenedPicker = useUserStore((s) => s.hasOpenedPicker);
@@ -42,6 +60,67 @@ const MessageRoomPage: React.FC = () => {
   const [windowHeight, setWindowHeight] = useState(
     Dimensions.get("window").height,
   );
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  const fetchMessages = useCallback(
+    async (loadMore = false) => {
+      if (!chatId) return;
+      if (loadMore) setLoadingHistory(true);
+
+      const currentCount = loadMore ? messagesRef.current.length : 0;
+      const from = currentCount;
+      const to = currentCount + PAGE_SIZE - 1;
+
+      const { data, error } = await supabase
+        .from("message")
+        .select("*")
+        .eq("room_id", chatId)
+        .order("created_at", { ascending: false }) // Fetch latest first
+        .range(from, to);
+
+      if (error) {
+        console.error("Error fetching messages:", error);
+      } else {
+        const newMessages = data || [];
+        if (newMessages.length < PAGE_SIZE) {
+          setHasMore(false);
+        }
+
+        // Reverse to show oldest first
+        const orderedMessages = newMessages.reverse();
+
+        if (loadMore) {
+          setMessages((prev) => [...orderedMessages, ...prev]);
+        } else {
+          setMessages((prev) => mergeMessagesById(prev, orderedMessages));
+          // Scroll to bottom on initial load
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: false });
+          }, 100);
+        }
+      }
+      setLoadingHistory(false);
+      setLoading(false);
+    },
+    [chatId],
+  );
+
+  const markAsRead = useCallback(async () => {
+    if (!user || !chatId) return;
+
+    // Call the RPC function to reset unread count
+    const { error } = await supabase.rpc("reset_unread_count", {
+      p_room_id: chatId,
+      p_user_id: user.id,
+    });
+
+    if (error) {
+      console.error("Error resetting unread count:", error);
+    }
+  }, [chatId, user]);
 
   useEffect(() => {
     if (!chatId || !user) return;
@@ -60,7 +139,16 @@ const MessageRoomPage: React.FC = () => {
           filter: `room_id=eq.${chatId}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
+          const incoming = payload.new as Message;
+
+          setMessages((prev) => {
+            if (prev.some((msg) => msg.id === incoming.id)) {
+              return prev;
+            }
+
+            return mergeMessagesById(prev, [incoming]);
+          });
+
           // If the message is not from me, mark as read again (optional, or handle on focus)
           if (payload.new.sender_id !== user.id) {
             markAsRead();
@@ -76,7 +164,7 @@ const MessageRoomPage: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [chatId, user]);
+  }, [chatId, fetchMessages, markAsRead, user]);
 
   useEffect(() => {
     const keyboardShowListener = Keyboard.addListener(
@@ -108,59 +196,6 @@ const MessageRoomPage: React.FC = () => {
       dimensionListener.remove();
     };
   }, []);
-
-  const fetchMessages = async (loadMore = false) => {
-    if (loadMore) setLoadingHistory(true);
-
-    const currentCount = loadMore ? messages.length : 0;
-    const from = currentCount;
-    const to = currentCount + PAGE_SIZE - 1;
-
-    const { data, error } = await supabase
-      .from("message")
-      .select("*")
-      .eq("room_id", chatId)
-      .order("created_at", { ascending: false }) // Fetch latest first
-      .range(from, to);
-
-    if (error) {
-      console.error("Error fetching messages:", error);
-    } else {
-      const newMessages = data || [];
-      if (newMessages.length < PAGE_SIZE) {
-        setHasMore(false);
-      }
-
-      // Reverse to show oldest first
-      const orderedMessages = newMessages.reverse();
-
-      if (loadMore) {
-        setMessages((prev) => [...orderedMessages, ...prev]);
-      } else {
-        setMessages(orderedMessages);
-        // Scroll to bottom on initial load
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: false });
-        }, 100);
-      }
-    }
-    setLoadingHistory(false);
-    setLoading(false);
-  };
-
-  const markAsRead = async () => {
-    if (!user || !chatId) return;
-
-    // Call the RPC function to reset unread count
-    const { error } = await supabase.rpc("reset_unread_count", {
-      p_room_id: chatId,
-      p_user_id: user.id,
-    });
-
-    if (error) {
-      console.error("Error resetting unread count:", error);
-    }
-  };
 
   const pickImage = async () => {
     setHasOpenedPicker(true);
@@ -203,17 +238,26 @@ const MessageRoomPage: React.FC = () => {
 
       const imageUrl = data.publicUrl;
 
-      const { error } = await supabase.from("message").insert({
-        room_id: chatId,
-        sender_id: user.id,
-        content: imageUrl,
-        type: "image",
-      });
+      const { data: insertedMessage, error } = await supabase
+        .from("message")
+        .insert({
+          room_id: chatId,
+          sender_id: user.id,
+          content: imageUrl,
+          type: "image",
+        })
+        .select("*")
+        .single();
 
-      if (error) {
+      if (error || !insertedMessage) {
         console.error("Error sending image message:", error);
         Alert.alert("Error", "Failed to send image message");
+        return;
       }
+
+      setMessages((prev) =>
+        mergeMessagesById(prev, [insertedMessage as Message]),
+      );
     } catch (error) {
       console.error("Error uploading image:", error);
       Alert.alert("Error", "Failed to upload image");
@@ -227,17 +271,26 @@ const MessageRoomPage: React.FC = () => {
     setNewMessage(""); // Clear input immediately
     Keyboard.dismiss();
 
-    const { error } = await supabase.from("message").insert({
-      room_id: chatId,
-      sender_id: user.id,
-      content: content,
-      type: "text",
-    });
+    const { data: insertedMessage, error } = await supabase
+      .from("message")
+      .insert({
+        room_id: chatId,
+        sender_id: user.id,
+        content: content,
+        type: "text",
+      })
+      .select("*")
+      .single();
 
-    if (error) {
+    if (error || !insertedMessage) {
       console.error("Error sending message:", error);
-      // Optionally show error to user or restore message to input
+      setNewMessage(content);
+      return;
     }
+
+    setMessages((prev) =>
+      mergeMessagesById(prev, [insertedMessage as Message]),
+    );
   };
 
   const groupMessages = (msgs: Message[]) => {
