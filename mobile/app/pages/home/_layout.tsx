@@ -32,6 +32,7 @@ const HomePage: React.FC = () => {
   const navigation = useNavigation();
   const router = useRouter();
   const user = useUserStore((s) => s.user);
+  const authLoading = useUserStore((s) => s.loading);
   const setUser = useUserStore((s) => s.setUser);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -41,13 +42,7 @@ const HomePage: React.FC = () => {
   const [marketplaceData, setMarketplaceData] = useState<MarketplaceItem[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadItems();
-    }, []),
-  );
-
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     try {
       setIsLoading(true);
       const items = await fetchMarketplaceItems();
@@ -57,9 +52,17 @@ const HomePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (authLoading) return;
+      void loadItems();
+    }, [authLoading, loadItems]),
+  );
 
   const onRefresh = async () => {
+    if (authLoading) return;
     setRefreshing(true);
     await loadItems();
     setRefreshing(false);
@@ -262,7 +265,7 @@ const HomePage: React.FC = () => {
           marketplaceData={marketplaceData}
           onRefresh={onRefresh}
           refreshing={refreshing}
-          isLoading={isLoading}
+          isLoading={isLoading || authLoading}
         />
       </View>
     </TouchableWithoutFeedback>
