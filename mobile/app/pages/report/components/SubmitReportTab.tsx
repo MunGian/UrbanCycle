@@ -19,6 +19,7 @@ import {
   View,
 } from "react-native";
 import MapBottomSheet from "./MapBottomSheet";
+import WasteTypeGuideBottomSheet from "./WasteTypeGuideBottomSheet";
 import AlertModal from "@/components/AlertModal";
 
 const SubmitReportTab: React.FC = () => {
@@ -155,6 +156,15 @@ const SubmitReportTab: React.FC = () => {
     });
   };
 
+  const onOpenWasteTypeManual = () => {
+    Keyboard.dismiss();
+    SooBottomSheet.push({
+      title: "Waste Type Manual",
+      needPadding: false,
+      child: <WasteTypeGuideBottomSheet />,
+    });
+  };
+
   return (
     <ScrollView
       className="flex-1 bg-white"
@@ -182,9 +192,18 @@ const SubmitReportTab: React.FC = () => {
 
         {/* Waste Type */}
         <View className="mb-4">
-          <Text className="text-sm font-medium text-gray-700 mb-2">
-            Waste Type
-          </Text>
+          <View className="flex-row justify-between items-center mb-2">
+            <Text className="text-sm font-medium text-gray-700">Waste Type</Text>
+            <TouchableOpacity
+              onPress={onOpenWasteTypeManual}
+              className="flex-row items-center bg-gray-100 rounded-full px-3 py-1.5"
+            >
+              <MaterialIcons name="menu-book" size={14} color="#374151" />
+              <Text className="text-xs font-medium text-gray-700 ml-1">
+                View Manual
+              </Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             className="flex-row items-center bg-gray-50 rounded-xl px-4 py-3 border border-gray-100"
             onPress={onWasteTypeClicked}
@@ -196,6 +215,10 @@ const SubmitReportTab: React.FC = () => {
             </Text>
             <MaterialIcons name="arrow-drop-down" size={24} color="#9CA3AF" />
           </TouchableOpacity>
+          <Text className="text-xs text-gray-500 mt-2">
+            Not sure which type to choose? Use the manual for examples and
+            exclusions.
+          </Text>
         </View>
 
         {/* Description */}
