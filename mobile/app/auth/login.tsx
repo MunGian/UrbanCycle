@@ -7,7 +7,9 @@ import { useUserStore } from "@/lib/zustand/useUserStore";
 import Feather from "@expo/vector-icons/Feather";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -22,6 +24,8 @@ import {
   View,
 } from "react-native";
 import VerifyEmailOtpBottomSheet from "./components/VerifyEmailOtpBottomSheet";
+
+WebBrowser.maybeCompleteAuthSession();
 
 const Login: React.FC = () => {
   const router = useRouter();
@@ -71,7 +75,120 @@ const Login: React.FC = () => {
   };
 
   const signInWithGoogle = async () => {
-    console.log("signInWithGoogle");
+    Keyboard.dismiss();
+    setLoading(true);
+
+    try {
+      const redirectTo = Linking.createURL("/auth/callback");
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data?.url) {
+        throw new Error("Google OAuth URL is missing.");
+      }
+
+      const authResult = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectTo,
+      );
+
+      if (authResult.type !== "success") {
+        return;
+      }
+
+      const queryParams = Linking.parse(authResult.url).queryParams ?? {};
+      const hashParamsRaw = authResult.url.split("#")[1] ?? "";
+      const hashParams = Object.fromEntries(
+        hashParamsRaw
+          .split("&")
+          .filter((segment) => segment.includes("="))
+          .map((segment) => {
+            const [key, value] = segment.split("=");
+            return [decodeURIComponent(key), decodeURIComponent(value ?? "")];
+          }),
+      );
+      const oauthError =
+        queryParams.error_description ??
+        queryParams.error ??
+        hashParams.error_description ??
+        hashParams.error;
+      if (typeof oauthError === "string" && oauthError.length > 0) {
+        throw new Error(oauthError);
+      }
+
+      const codeFromQuery = queryParams.code;
+      const codeFromHash = hashParams.code;
+      const code =
+        typeof codeFromQuery === "string"
+          ? codeFromQuery
+          : typeof codeFromHash === "string"
+            ? codeFromHash
+            : undefined;
+
+      if (typeof code !== "string" || code.length === 0) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          const profile = await fetchUserProfile(session.user.id);
+          if (profile?.role === "admin") {
+            await supabase.auth.signOut();
+            onAccessDenied();
+            return;
+          }
+          if (profile) {
+            useUserStore.getState().setUser(profile);
+          }
+          router.replace(Route.HomePage);
+          return;
+        }
+
+        throw new Error("Missing authorization code from Google.");
+      }
+
+      const { data: exchangeData, error: exchangeError } =
+        await supabase.auth.exchangeCodeForSession(code);
+
+      if (exchangeError) {
+        throw exchangeError;
+      }
+
+      const userId = exchangeData.session?.user?.id;
+      if (!userId) {
+        throw new Error("Authenticated user was not returned by Supabase.");
+      }
+
+      const profile = await fetchUserProfile(userId);
+      if (profile?.role === "admin") {
+        await supabase.auth.signOut();
+        onAccessDenied();
+        return;
+      }
+
+      if (profile) {
+        useUserStore.getState().setUser(profile);
+      }
+      console.log("Google OAuth login successful", { userId });
+      router.replace(Route.HomePage);
+    } catch (err) {
+      console.error("Google OAuth login error:", err);
+      Alert.alert(
+        "Google Sign-In Failed",
+        "We couldn't complete your Google sign-in. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logInWithEmail = async () => {
@@ -252,7 +369,10 @@ const Login: React.FC = () => {
         <View className="flex flex-col w-full gap-4">
           <TouchableOpacity
             onPress={signInWithGoogle}
-            className="flex flex-row border border-gray-300 rounded-full px-4 py-3 items-center justify-center gap-2"
+            disabled={loading}
+            className={`flex flex-row border border-gray-300 rounded-full px-4 py-3 items-center justify-center gap-2 ${
+              loading ? "opacity-50" : "opacity-100"
+            }`}
           >
             <Image
               source={{
