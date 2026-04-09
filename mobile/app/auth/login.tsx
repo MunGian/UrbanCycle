@@ -21,21 +21,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-
-// Tells Supabase Auth to continuously refresh the session automatically if
-// the app is in the foreground. When this is added, you will continue to receive
-// `onAuthStateChange` events with the `TOKEN_REFRESHED` or `SIGNED_OUT` event
-// if the user's session is terminated. This should only be registered once.
-// AppState.addEventListener("change", (state) => {
-//   if (state === "active") {
-//     console.log("refreshing token......................");
-//     supabase.auth.startAutoRefresh();
-//   } else {
-//     supabase.auth.stopAutoRefresh();
-//   }
-// });
-
-// console.log("supabase", supabase.auth);
+import VerifyEmailOtpBottomSheet from "./components/VerifyEmailOtpBottomSheet";
 
 const Login: React.FC = () => {
   const router = useRouter();
@@ -99,6 +85,20 @@ const Login: React.FC = () => {
       });
 
       if (error) {
+        const message = error.message.toLowerCase();
+        const isEmailNotVerified =
+          message.includes("email not confirmed") ||
+          (error as { code?: string }).code === "email_not_confirmed";
+        if (isEmailNotVerified && email.length > 0) {
+          SooBottomSheet.push({
+            title: "Verify your email",
+            needPadding: true,
+            child: (
+              <VerifyEmailOtpBottomSheet email={email} password={password} />
+            ),
+          });
+          return;
+        }
         onInvalidCredential();
         return;
       }

@@ -109,9 +109,8 @@ const FillUpAvatarBottomSheet: React.FC = () => {
     <View className="flex items-center mt-2">
       {/* Heading */}
       <Text className="text-sm text-gray-500 text-start leading-relaxed">
-        Tap the avatar below to choose a photo from your device. This is
-        optional, but recommended to help friends and community members
-        recognize you easily.
+        Tap the avatar below to choose a photo from your device. This helps
+        friends and community members recognize you easily.
       </Text>
 
       {/* Avatar picker */}

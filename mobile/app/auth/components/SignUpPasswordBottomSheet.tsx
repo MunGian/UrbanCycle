@@ -15,6 +15,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import AlertModal from "@/components/AlertModal";
 import PrivacyPolicyBottomSheet from "./PrivacyPolicyBottomSheet";
 import TermsOfServiceBottomSheet from "./TermsOfServiceBottomSheet";
+import VerifyEmailOtpBottomSheet from "./VerifyEmailOtpBottomSheet";
 
 interface SignUpPasswordBottomSheetProps {
   email?: string;
@@ -59,6 +60,26 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
     setPasswordVisibility(!passwordVisibility);
   };
 
+  const onEmailAlreadySignedUp = () => {
+    SooBottomSheet.push({
+      title: "",
+      needPadding: false,
+      isDismissible: false,
+      needCloseButton: false,
+      child: (
+        <AlertModal
+          title="Email Already Registered"
+          description="This email is already signed up. Please log in with your existing account."
+          status="failed"
+          confirmText="Understood"
+          onClose={() => {
+            SooBottomSheet.popAll();
+          }}
+        />
+      ),
+    });
+  };
+
   const onContinuePress = async () => {
     if (!email || !password) return;
 
@@ -71,6 +92,16 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
       password: password,
     });
     if (error) {
+      setLoading(false);
+      const isExistingEmailError =
+        error.message.toLowerCase().includes("already registered") ||
+        error.message.toLowerCase().includes("already been registered") ||
+        (error as { code?: string }).code === "user_already_exists";
+      if (isExistingEmailError) {
+        console.log("signUp:existing-email-detected", { email });
+        onEmailAlreadySignedUp();
+        return;
+      }
       SooBottomSheet.push({
         title: "",
         needPadding: false,
@@ -90,19 +121,47 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
       return;
     }
 
-    if (user) {
-      const { data: profile } = await supabase
-        .from("user")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      console.log("Profile exists:", profile);
+    const isExistingUser =
+      user !== null && Array.isArray(user.identities) && user.identities.length === 0;
+    if (isExistingUser) {
+      console.log("signUp:existing-email-detected-by-identities", { email });
+      setLoading(false);
+      onEmailAlreadySignedUp();
+      return;
     }
 
-    console.log("Sign up response:", { user, session, error });
-    SooBottomSheet.popAll();
+    if (session) {
+      console.log("signUp:session-created-signing-out", { email });
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) {
+        console.log("signUp:post-signup-signout-error", {
+          email,
+          message: signOutError.message,
+        });
+      }
+    }
+
+    const otpType = "signup";
+
+    console.log("signUp:success", {
+      hasUser: Boolean(user),
+      hasSession: Boolean(session),
+      otpType,
+      email,
+    });
     setLoading(false);
+    SooBottomSheet.push({
+      title: "Verify your email",
+      needPadding: true,
+      child: (
+        <VerifyEmailOtpBottomSheet
+          email={email}
+          password={password}
+          otpType={otpType}
+          initialResendCooldownSeconds={60}
+        />
+      ),
+    });
   };
 
   const passwordRuleItem = (passed: boolean, label: string) => {
