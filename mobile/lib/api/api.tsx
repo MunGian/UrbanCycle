@@ -231,15 +231,19 @@ export const updateItem = async (itemId: string, updates: any) => {
 // -------------------- Report Functions --------------------
 
 export const uploadReportImage = async (
-  userId: string,
+  userId: string | null | undefined,
   imageUri: string,
 ): Promise<string> => {
   try {
     const response = await fetch(imageUri);
     const blob = await response.blob();
     const arrayBuffer = await new Response(blob).arrayBuffer();
-    const fileExt = imageUri.split(".").pop()?.toLowerCase() || "jpg";
-    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    const rawFileExt = imageUri.split(".").pop()?.toLowerCase() || "jpg";
+    const fileExt = /^[a-z0-9]{2,5}$/.test(rawFileExt) ? rawFileExt : "jpg";
+    const reporterKey =
+      userId?.trim().replace(/[^a-zA-Z0-9_-]/g, "") ||
+      `guest-${Date.now()}`;
+    const fileName = `${reporterKey}-${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
@@ -267,9 +271,48 @@ export const uploadReportImage = async (
 export const submitReport = async (
   reportData: Omit<Report, "id" | "status" | "created_at">,
 ) => {
+  const normalizedLocation = reportData.location?.trim();
+  const normalizedDescription = reportData.description?.trim();
+  const normalizedType = reportData.type?.trim();
+  const normalizedImages = Array.isArray(reportData.images)
+    ? reportData.images
+        .filter((image): image is string => typeof image === "string")
+        .map((image) => image.trim())
+        .filter(Boolean)
+    : [];
+
+  const latitude =
+    typeof reportData.latitude === "number" && Number.isFinite(reportData.latitude)
+      ? reportData.latitude
+      : null;
+  const longitude =
+    typeof reportData.longitude === "number" &&
+    Number.isFinite(reportData.longitude)
+      ? reportData.longitude
+      : null;
+
+  if (!normalizedLocation || !normalizedDescription || !normalizedType) {
+    throw new Error("Missing required report fields.");
+  }
+
+  if (normalizedImages.length === 0) {
+    throw new Error("At least one image is required.");
+  }
+
+  const normalizedUserId =
+    typeof reportData.user_id === "string" && reportData.user_id.trim()
+      ? reportData.user_id
+      : null;
+
   const { error } = await supabase.from("reports").insert([
     {
-      ...reportData,
+      user_id: normalizedUserId,
+      location: normalizedLocation,
+      latitude,
+      longitude,
+      description: normalizedDescription,
+      type: normalizedType,
+      images: normalizedImages,
       status: "Pending",
     },
   ]);

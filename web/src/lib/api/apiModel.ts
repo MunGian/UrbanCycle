@@ -14,8 +14,8 @@ export interface User {
 
 export interface Report {
   id: string;
-  user_id: string;
-  user: User;
+  user_id: string | null;
+  user: User | null;
   location: string;
   latitude: number | null;
   longitude: number | null;

@@ -98,18 +98,15 @@ export function ReportsPageClient({ initialReports }: ReportsPageClientProps) {
   };
 
   const filteredReports = useMemo(() => {
+    const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+    const now = new Date();
+
     return reports
       .filter((report) => {
         const matchesSearch =
-          (report.description?.toLowerCase() || "").includes(
-            searchQuery.toLowerCase(),
-          ) ||
-          (report.location?.toLowerCase() || "").includes(
-            searchQuery.toLowerCase(),
-          ) ||
-          (report.type?.toLowerCase() || "").includes(
-            searchQuery.toLowerCase(),
-          );
+          (report.description?.toLowerCase() || "").includes(normalizedSearchQuery) ||
+          (report.location?.toLowerCase() || "").includes(normalizedSearchQuery) ||
+          (report.type?.toLowerCase() || "").includes(normalizedSearchQuery);
 
         const matchesStatus =
           statusFilter === "All" || report.status === statusFilter;
@@ -125,7 +122,7 @@ export function ReportsPageClient({ initialReports }: ReportsPageClientProps) {
         const matchesDate = (() => {
           if (dateFilter === "All Time") return true;
           const reportDate = new Date(report.created_at);
-          const now = new Date();
+          if (Number.isNaN(reportDate.getTime())) return false;
 
           if (dateFilter === "Today") {
             return reportDate.toDateString() === now.toDateString();
@@ -157,7 +154,11 @@ export function ReportsPageClient({ initialReports }: ReportsPageClientProps) {
       .sort((a, b) => {
         const dateA = new Date(a.created_at).getTime();
         const dateB = new Date(b.created_at).getTime();
-        return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+        const normalizedDateA = Number.isNaN(dateA) ? 0 : dateA;
+        const normalizedDateB = Number.isNaN(dateB) ? 0 : dateB;
+        return sortOrder === "newest"
+          ? normalizedDateB - normalizedDateA
+          : normalizedDateA - normalizedDateB;
       });
   }, [
     reports,

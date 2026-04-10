@@ -8,6 +8,13 @@ interface ReportsListProps {
 }
 
 export function ReportsList({ reports, onSelectReport }: ReportsListProps) {
+  const formatDate = (value: string) => {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? "Unknown date"
+      : parsed.toLocaleDateString("en-GB");
+  };
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-in fade-in duration-500">
       <div className="overflow-x-auto">
@@ -65,7 +72,7 @@ export function ReportsList({ reports, onSelectReport }: ReportsListProps) {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-gray-500 whitespace-nowrap text-right font-mono text-xs">
-                  {new Date(report.created_at).toLocaleDateString("en-GB")}
+                  {formatDate(report.created_at)}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <ChevronDown className="h-4 w-4 text-gray-300 -rotate-90 group-hover:text-blue-400 transition-colors" />

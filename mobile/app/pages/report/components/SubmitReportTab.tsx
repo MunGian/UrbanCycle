@@ -155,20 +155,27 @@ const SubmitReportTab: React.FC = () => {
       first.width === second.width &&
       first.height === second.height;
 
-    const hasFileSize =
-      typeof first.fileSize === "number" && typeof second.fileSize === "number";
+    const firstFileSize =
+      typeof first.fileSize === "number" ? first.fileSize : null;
+    const secondFileSize =
+      typeof second.fileSize === "number" ? second.fileSize : null;
+    const hasFileSize = firstFileSize !== null && secondFileSize !== null;
     const sameFileSizeWithinTolerance =
       hasFileSize &&
-      Math.abs(first.fileSize - second.fileSize) <=
+      Math.abs(firstFileSize - secondFileSize) <=
         Math.max(
           SAME_PHOTO_MIN_SIZE_TOLERANCE_BYTES,
           Math.round(
-            Math.max(first.fileSize, second.fileSize) *
+            Math.max(firstFileSize, secondFileSize) *
               SAME_PHOTO_SIZE_TOLERANCE_RATIO,
           ),
         );
 
-    if (sameCapturedAt && sameDimensions && (!hasFileSize || sameFileSizeWithinTolerance)) {
+    if (
+      sameCapturedAt &&
+      sameDimensions &&
+      (!hasFileSize || sameFileSizeWithinTolerance)
+    ) {
       return true;
     }
 
@@ -176,10 +183,65 @@ const SubmitReportTab: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!user) {
+    const normalizedLocation = location.trim();
+    const normalizedDescription = description.trim();
+    const normalizedType = selectedType.trim();
+
+    if (!normalizedLocation) {
       showAlertSheet({
-        title: "Error",
-        description: "You must be logged in to submit a report.",
+        title: "Location required",
+        description: "Please select a valid location before submitting.",
+      });
+      return;
+    }
+
+    if (!normalizedType || !wasteTypes.includes(normalizedType)) {
+      showAlertSheet({
+        title: "Waste type required",
+        description: "Please select a valid waste type from the list.",
+      });
+      return;
+    }
+
+    if (!normalizedDescription) {
+      showAlertSheet({
+        title: "Description required",
+        description: "Please provide a short description of the issue.",
+      });
+      return;
+    }
+
+    if (photos.length === 0) {
+      showAlertSheet({
+        title: "Photo required",
+        description: "Please attach at least one photo before submitting.",
+      });
+      return;
+    }
+
+    if (
+      coordinate &&
+      (!Number.isFinite(coordinate.latitude) ||
+        !Number.isFinite(coordinate.longitude))
+    ) {
+      showAlertSheet({
+        title: "Invalid location",
+        description: "Selected map coordinates are invalid. Please reselect.",
+      });
+      return;
+    }
+
+    const hasInvalidPhotoInput = photos.some(
+      (photo) =>
+        typeof photo.uri !== "string" ||
+        !photo.uri.trim() ||
+        typeof photo.capturedAt !== "string" ||
+        Number.isNaN(new Date(photo.capturedAt).getTime()),
+    );
+    if (hasInvalidPhotoInput) {
+      showAlertSheet({
+        title: "Invalid photo",
+        description: "One or more photos are invalid. Please re-add them.",
       });
       return;
     }
@@ -201,18 +263,26 @@ const SubmitReportTab: React.FC = () => {
       const uploadedImageUrls: string[] = [];
       if (photos.length > 0) {
         for (const photo of photos) {
-          const url = await uploadReportImage(user.id, photo.uri);
+          const url = await uploadReportImage(user?.id, photo.uri);
           uploadedImageUrls.push(url);
         }
       }
 
       const reportData: Omit<Report, "id" | "status" | "created_at"> = {
-        user_id: user.id,
-        location,
-        latitude: coordinate?.latitude || null,
-        longitude: coordinate?.longitude || null,
-        description,
-        type: selectedType,
+        user_id: user?.id ?? null,
+        location: normalizedLocation,
+        latitude:
+          typeof coordinate?.latitude === "number" &&
+          Number.isFinite(coordinate.latitude)
+            ? coordinate.latitude
+            : null,
+        longitude:
+          typeof coordinate?.longitude === "number" &&
+          Number.isFinite(coordinate.longitude)
+            ? coordinate.longitude
+            : null,
+        description: normalizedDescription,
+        type: normalizedType,
         images: uploadedImageUrls,
       };
 
@@ -250,6 +320,13 @@ const SubmitReportTab: React.FC = () => {
     }
   };
 
+  const isSubmitDisabled =
+    loading ||
+    !location.trim() ||
+    !description.trim() ||
+    !selectedType.trim() ||
+    photos.length === 0;
+
   const onOpenMap = () => {
     Keyboard.dismiss();
     SooBottomSheet.push({
@@ -279,8 +356,8 @@ const SubmitReportTab: React.FC = () => {
 
     setPhotos((currentPhotos) => {
       if (
-        currentPhotos.some(
-          (existingPhoto) => arePhotosLikelySame(existingPhoto, photo),
+        currentPhotos.some((existingPhoto) =>
+          arePhotosLikelySame(existingPhoto, photo),
         )
       ) {
         showAlertSheet({
@@ -469,7 +546,6 @@ const SubmitReportTab: React.FC = () => {
       showsVerticalScrollIndicator={false}
     >
       <View className="px-6 py-6 pb-10">
-        {/* Location Input */}
         <View className="mb-4">
           <Text className="text-sm font-medium text-gray-700 mb-2">
             Location
@@ -487,8 +563,6 @@ const SubmitReportTab: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Waste Type */}
         <View className="mb-4">
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-sm font-medium text-gray-700">
@@ -520,8 +594,6 @@ const SubmitReportTab: React.FC = () => {
             exclusions.
           </Text>
         </View>
-
-        {/* Description */}
         <View className="mb-4">
           <Text className="text-sm font-medium text-gray-700 mb-2">
             Description
@@ -537,8 +609,6 @@ const SubmitReportTab: React.FC = () => {
             />
           </View>
         </View>
-
-        {/* Photo Upload */}
         <View className="mb-6">
           <Text className="text-sm font-medium text-gray-700 mb-2">
             Add Photos
@@ -574,25 +644,11 @@ const SubmitReportTab: React.FC = () => {
             ))}
           </ScrollView>
         </View>
-
-        {/* Submit Button */}
         <TouchableOpacity
           onPress={handleSubmit}
-          disabled={
-            loading ||
-            !location ||
-            !description ||
-            !selectedType ||
-            photos.length === 0
-          }
+          disabled={isSubmitDisabled}
           className={`bg-black py-4 rounded-full items-center shadow-lg ${
-            loading ||
-            !location ||
-            !description ||
-            !selectedType ||
-            photos.length === 0
-              ? "opacity-60"
-              : ""
+            isSubmitDisabled ? "opacity-60" : ""
           }`}
         >
           {loading ? (

@@ -4,7 +4,7 @@ import { ReportStatusBadge } from "./ReportStatusBadge";
 import { ReportEvidenceGallery } from "./ReportEvidenceGallery";
 import { ReportMap } from "./ReportMap";
 import { StatusSelect } from "./StatusSelect";
-import { X } from "lucide-react";
+import { User, X } from "lucide-react";
 import Image from "next/image";
 
 interface ReportDetailModalProps {
@@ -22,6 +22,12 @@ export function ReportDetailModal({
   onStatusUpdate,
 }: ReportDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const formatDateTime = (value: string) => {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? "Unknown date"
+      : parsed.toLocaleString("en-GB");
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -39,6 +45,9 @@ export function ReportDetailModal({
   }, [onClose]);
 
   if (!report) return null;
+  const reporterName = `${report.user?.first_name || "Guest"} ${report.user?.last_name || "Reporter"}`.trim();
+  const reporterAvatar = report.user?.avatar_url?.trim();
+  const reportIdPreview = (report.id || "unknown").slice(0, 8);
 
   return (
     <div className="fixed inset-0 z-1000 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
@@ -58,11 +67,11 @@ export function ReportDetailModal({
             </h2>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
-                #{report.id.slice(0, 8)}
+                #{reportIdPreview}
               </span>
               <span className="text-xs text-gray-400">•</span>
               <span className="text-sm text-gray-500">
-                Created {new Date(report.created_at).toLocaleString("en-GB")}
+                Created {formatDateTime(report.created_at)}
               </span>
             </div>
           </div>
@@ -92,13 +101,19 @@ export function ReportDetailModal({
               <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex items-center gap-4 hover:border-blue-100 transition-colors">
                 {/* Avatar Container */}
                 <div className="relative h-12 w-12 flex-shrink-0 rounded-full overflow-hidden border border-gray-200">
-                  <Image
-                    src={report.user.avatar_url || "/default-avatar.png"}
-                    alt="User Avatar"
-                    fill
-                    sizes="48px"
-                    className="object-cover"
-                  />
+                  {reporterAvatar ? (
+                    <Image
+                      src={reporterAvatar}
+                      alt="User Avatar"
+                      fill
+                      sizes="48px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-gray-100 flex items-center justify-center text-gray-500">
+                      <User className="h-5 w-5" />
+                    </div>
+                  )}
                 </div>
 
                 {/* User Info */}
@@ -107,12 +122,10 @@ export function ReportDetailModal({
                     Reported By
                   </p>
                   <p className="text-sm md:text-sm font-medium text-gray-800 truncate">
-                    Name:{" "}
-                    {report.user.first_name + " " + report.user.last_name ||
-                      "User"}
+                    Name: {reporterName}
                   </p>
                   <p className="text-sm md:text-sm font-medium text-gray-800">
-                    ID: {report.user_id}
+                    ID: {report.user_id || "Guest Submission"}
                   </p>
                 </div>
               </div>
@@ -153,8 +166,8 @@ export function ReportDetailModal({
             {/* Right Column: Interactive Map */}
             <div className="flex flex-col h-full min-h-[400px] lg:min-h-0 relative group rounded-2xl overflow-hidden shadow-sm">
               <ReportMap
-                latitude={report.latitude!}
-                longitude={report.longitude!}
+                latitude={report.latitude ?? undefined}
+                longitude={report.longitude ?? undefined}
                 location={report.location}
               />
             </div>
@@ -165,9 +178,7 @@ export function ReportDetailModal({
         <div className="p-6 border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm flex justify-between items-center gap-4 flex-shrink-0 relative z-30">
           <div className="hidden sm:block text-xs text-gray-400">
             Last updated:{" "}
-            {new Date(report.updated_at || report.created_at).toLocaleString(
-              "en-GB",
-            )}
+            {formatDateTime(report.updated_at || report.created_at)}
           </div>
           {report.status !== "Resolved" && (
             <div className="flex gap-3 ml-auto w-full sm:w-auto">

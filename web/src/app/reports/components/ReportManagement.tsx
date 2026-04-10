@@ -21,6 +21,12 @@ export function ReportManagement({ initialReports }: ReportManagementProps) {
   const setReports = useReportStore((state) => state.setReports);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const formatDate = (value: string) => {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? "Unknown date"
+      : parsed.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  };
 
   const latestReports = initialReports.slice(0, 10);
 
@@ -133,10 +139,7 @@ export function ReportManagement({ initialReports }: ReportManagementProps) {
                         </span>
                         <span className="flex items-center gap-1.5">
                           <Calendar className="h-3 w-3" />
-                          {new Date(report.created_at).toLocaleDateString(
-                            undefined,
-                            { month: "short", day: "numeric" },
-                          )}
+                          {formatDate(report.created_at)}
                         </span>
                       </div>
                     </div>

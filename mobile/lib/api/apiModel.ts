@@ -47,7 +47,7 @@ export interface CartItem {
 
 export interface Report {
   id: string;
-  user_id: string;
+  user_id: string | null;
   location: string;
   latitude: number | null;
   longitude: number | null;

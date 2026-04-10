@@ -56,6 +56,9 @@ export default function DashboardPage() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const reportsThisMonth = reports.filter((r) => {
     const d = new Date(r.created_at);
+    if (Number.isNaN(d.getTime())) {
+      return false;
+    }
     return d >= startOfMonth && d <= now;
   }).length;
 

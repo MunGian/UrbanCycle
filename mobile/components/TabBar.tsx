@@ -80,7 +80,12 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         const isFocused = state.index === index;
 
         const onPress = () => {
-          if (!user && route.name !== "profile" && route.name !== "home") {
+          if (
+            !user &&
+            route.name !== "profile" &&
+            route.name !== "home" &&
+            route.name !== "report"
+          ) {
             onUnloginAlert();
             return;
           }

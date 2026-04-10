@@ -8,6 +8,13 @@ interface ReportsGridProps {
 }
 
 export function ReportsGrid({ reports, onSelectReport }: ReportsGridProps) {
+  const formatDate = (value: string) => {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? "Unknown date"
+      : parsed.toLocaleDateString("en-GB");
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in zoom-in-95 duration-500">
       {reports.map((report) => (
@@ -43,7 +50,7 @@ export function ReportsGrid({ reports, onSelectReport }: ReportsGridProps) {
               </span>
               <span className="text-xs text-gray-400 flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {new Date(report.created_at).toLocaleDateString("en-GB")}
+                {formatDate(report.created_at)}
               </span>
             </div>
 

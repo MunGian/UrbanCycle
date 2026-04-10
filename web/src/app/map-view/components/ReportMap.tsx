@@ -86,9 +86,20 @@ const getRouteStopIcon = (sequence: number) =>
   });
 
 const hasValidCoordinates = (report: Report) => {
+  if (report.latitude === null || report.longitude === null) {
+    return false;
+  }
+
   const lat = Number(report.latitude);
   const lng = Number(report.longitude);
-  return Number.isFinite(lat) && Number.isFinite(lng);
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
 };
 
 const toRad = (value: number) => (value * Math.PI) / 180;
@@ -456,9 +467,7 @@ export default function ReportMap() {
     KOMTAR_LOCATION.longitude,
   ];
   const center: [number, number] =
-    filteredReports.length > 0 &&
-    filteredReports[0].latitude &&
-    filteredReports[0].longitude
+    filteredReports.length > 0 && hasValidCoordinates(filteredReports[0])
       ? [
           Number(filteredReports[0].latitude),
           Number(filteredReports[0].longitude),
@@ -732,11 +741,13 @@ export default function ReportMap() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Reported by: {report.user?.first_name}{" "}
-                      {report.user?.last_name}
+                      Reported by:{" "}
+                      {`${report.user?.first_name || "Guest"} ${report.user?.last_name || "Reporter"}`.trim()}
                     </p>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(report.created_at).toLocaleString("en-GB")}
+                      {Number.isNaN(new Date(report.created_at).getTime())
+                        ? "Unknown date"
+                        : new Date(report.created_at).toLocaleString("en-GB")}
                     </span>
                     {routeSequence && (
                       <p className="mt-1 text-xs font-semibold text-slate-700">
