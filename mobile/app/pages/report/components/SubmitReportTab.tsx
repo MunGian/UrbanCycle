@@ -9,7 +9,6 @@ import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Keyboard,
   ScrollView,
@@ -22,6 +21,21 @@ import MapBottomSheet from "./MapBottomSheet";
 import WasteTypeGuideBottomSheet from "./WasteTypeGuideBottomSheet";
 import AlertModal from "@/components/AlertModal";
 
+const MAX_PHOTO_AGE_MS = 24 * 60 * 60 * 1000;
+const SAME_PHOTO_CAPTURE_TIME_TOLERANCE_MS = 1000;
+const SAME_PHOTO_MIN_SIZE_TOLERANCE_BYTES = 12 * 1024;
+const SAME_PHOTO_SIZE_TOLERANCE_RATIO = 0.08;
+
+type ReportPhoto = {
+  uri: string;
+  capturedAt: string;
+  assetId?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  width?: number;
+  height?: number;
+};
+
 const SubmitReportTab: React.FC = () => {
   const user = useUserStore((s) => s.user);
   const [location, setLocation] = useState("");
@@ -30,22 +44,164 @@ const SubmitReportTab: React.FC = () => {
   const [coordinate, setCoordinate] = useState<
     { latitude: number; longitude: number } | undefined
   >(undefined);
-  const [images, setImages] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<ReportPhoto[]>([]);
   const [loading, setLoading] = useState(false);
   const setHasOpenedPicker = useUserStore((s) => s.setHasOpenedPicker);
+  const parseExifDate = (value: unknown): Date | null => {
+    if (typeof value !== "string" || !value.trim()) {
+      return null;
+    }
+
+    const normalized = value.replace(/^(\d{4}):(\d{2}):(\d{2})/, "$1-$2-$3");
+    const parsed = new Date(normalized);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const extractCapturedAtFromExif = (
+    exif?: ImagePicker.ImagePickerAsset["exif"],
+  ) => {
+    if (!exif) return null;
+
+    const exifDate =
+      parseExifDate(exif.DateTimeOriginal) ||
+      parseExifDate(exif.DateTimeDigitized) ||
+      parseExifDate(exif.DateTime);
+
+    return exifDate;
+  };
+
+  const isPhotoWithin24Hours = (capturedAt: string) => {
+    const capturedAtMs = new Date(capturedAt).getTime();
+
+    if (Number.isNaN(capturedAtMs)) {
+      return false;
+    }
+
+    const ageMs = Date.now() - capturedAtMs;
+    return ageMs >= 0 && ageMs <= MAX_PHOTO_AGE_MS;
+  };
+
+  const showAlertSheet = ({
+    title,
+    description,
+    confirmText = "Done",
+    status = "failed",
+    onConfirm,
+    isDismissible = true,
+    needCloseButton = true,
+  }: {
+    title: string;
+    description: string;
+    confirmText?: string;
+    status?: "success" | "failed";
+    onConfirm?: () => void;
+    isDismissible?: boolean;
+    needCloseButton?: boolean;
+  }) => {
+    SooBottomSheet.push({
+      title: "",
+      needPadding: false,
+      isDismissible,
+      needCloseButton,
+      child: (
+        <AlertModal
+          title={title}
+          description={description}
+          status={status}
+          confirmText={confirmText}
+          onClose={() => {
+            SooBottomSheet.pop();
+            onConfirm?.();
+          }}
+        />
+      ),
+    });
+  };
+
+  const buildPhotoFingerprint = (photo: ReportPhoto) => {
+    if (photo.assetId) {
+      return `asset:${photo.assetId}`;
+    }
+
+    const dimension = `${photo.width ?? "?"}x${photo.height ?? "?"}`;
+    const capturedAtMs = new Date(photo.capturedAt).getTime();
+    const capturedAtToken = Number.isNaN(capturedAtMs)
+      ? photo.capturedAt
+      : capturedAtMs.toString();
+    return `${dimension}|${capturedAtToken}`;
+  };
+
+  const arePhotosLikelySame = (first: ReportPhoto, second: ReportPhoto) => {
+    if (first.assetId && second.assetId && first.assetId === second.assetId) {
+      return true;
+    }
+
+    const firstCapturedAtMs = new Date(first.capturedAt).getTime();
+    const secondCapturedAtMs = new Date(second.capturedAt).getTime();
+    const hasCapturedAt =
+      !Number.isNaN(firstCapturedAtMs) && !Number.isNaN(secondCapturedAtMs);
+    const sameCapturedAt =
+      hasCapturedAt &&
+      Math.abs(firstCapturedAtMs - secondCapturedAtMs) <=
+        SAME_PHOTO_CAPTURE_TIME_TOLERANCE_MS;
+
+    const hasDimensions =
+      typeof first.width === "number" &&
+      typeof first.height === "number" &&
+      typeof second.width === "number" &&
+      typeof second.height === "number";
+    const sameDimensions =
+      hasDimensions &&
+      first.width === second.width &&
+      first.height === second.height;
+
+    const hasFileSize =
+      typeof first.fileSize === "number" && typeof second.fileSize === "number";
+    const sameFileSizeWithinTolerance =
+      hasFileSize &&
+      Math.abs(first.fileSize - second.fileSize) <=
+        Math.max(
+          SAME_PHOTO_MIN_SIZE_TOLERANCE_BYTES,
+          Math.round(
+            Math.max(first.fileSize, second.fileSize) *
+              SAME_PHOTO_SIZE_TOLERANCE_RATIO,
+          ),
+        );
+
+    if (sameCapturedAt && sameDimensions && (!hasFileSize || sameFileSizeWithinTolerance)) {
+      return true;
+    }
+
+    return buildPhotoFingerprint(first) === buildPhotoFingerprint(second);
+  };
 
   const handleSubmit = async () => {
     if (!user) {
-      Alert.alert("Error", "You must be logged in to submit a report.");
+      showAlertSheet({
+        title: "Error",
+        description: "You must be logged in to submit a report.",
+      });
+      return;
+    }
+
+    const hasExpiredPhoto = photos.some(
+      (photo) => !isPhotoWithin24Hours(photo.capturedAt),
+    );
+    if (hasExpiredPhoto) {
+      showAlertSheet({
+        title: "Photo too old",
+        description:
+          "All photos must be captured within the last 24 hours. Please retake your photos and try again.",
+      });
       return;
     }
 
     setLoading(true);
     try {
       const uploadedImageUrls: string[] = [];
-      if (images.length > 0) {
-        for (const imgUri of images) {
-          const url = await uploadReportImage(user.id, imgUri);
+      if (photos.length > 0) {
+        for (const photo of photos) {
+          const url = await uploadReportImage(user.id, photo.uri);
           uploadedImageUrls.push(url);
         }
       }
@@ -77,7 +233,7 @@ const SubmitReportTab: React.FC = () => {
               setDescription("");
               setSelectedType("");
               setCoordinate(undefined);
-              setImages([]);
+              setPhotos([]);
               SooBottomSheet.pop();
             }}
           />
@@ -85,7 +241,10 @@ const SubmitReportTab: React.FC = () => {
       });
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Failed to submit report. Please try again.");
+      showAlertSheet({
+        title: "Error",
+        description: "Failed to submit report. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -109,33 +268,172 @@ const SubmitReportTab: React.FC = () => {
     });
   };
 
-  const pickImage = async () => {
-    setHasOpenedPicker(true);
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission required",
-        "Please allow access to your photo library.",
-      );
+  const addPhoto = (photo: ReportPhoto) => {
+    if (!isPhotoWithin24Hours(photo.capturedAt)) {
+      showAlertSheet({
+        title: "Photo too old",
+        description: "Only photos captured in the last 24 hours are accepted.",
+      });
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
+    setPhotos((currentPhotos) => {
+      if (
+        currentPhotos.some(
+          (existingPhoto) => arePhotosLikelySame(existingPhoto, photo),
+        )
+      ) {
+        showAlertSheet({
+          title: "Duplicate photo",
+          description: "This photo has already been selected.",
+        });
+        return currentPhotos;
+      }
+      return [...currentPhotos, photo];
+    });
+  };
+
+  const capturePhoto = async () => {
+    setHasOpenedPicker(true);
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      showAlertSheet({
+        title: "Permission required",
+        description: "Please allow access to your camera.",
+      });
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
+      exif: true,
     });
 
     if (!result.canceled) {
-      setImages([...images, result.assets[0].uri]);
+      const asset = result.assets[0];
+      const capturedAt =
+        extractCapturedAtFromExif(asset.exif)?.toISOString() ||
+        new Date().toISOString();
+      addPhoto({
+        uri: asset.uri,
+        capturedAt,
+        assetId: asset.assetId,
+        fileName: asset.fileName,
+        fileSize: asset.fileSize,
+        width: asset.width,
+        height: asset.height,
+      });
     }
   };
 
-  const removeImage = (index: number) => {
-    const newImages = [...images];
-    newImages.splice(index, 1);
-    setImages(newImages);
+  const pickPhotoFromGallery = async () => {
+    setHasOpenedPicker(true);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      showAlertSheet({
+        title: "Permission required",
+        description: "Please allow access to your photo library.",
+      });
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      exif: true,
+    });
+
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      const capturedAt = extractCapturedAtFromExif(asset.exif);
+
+      if (!capturedAt) {
+        showAlertSheet({
+          title: "Timestamp required",
+          description:
+            "This gallery photo has no EXIF capture timestamp. Please capture the waste using your camera.",
+          confirmText: "Open Camera",
+          onConfirm: () => {
+            setTimeout(() => {
+              void capturePhoto();
+            }, 200);
+          },
+        });
+        return;
+      }
+
+      addPhoto({
+        uri: asset.uri,
+        capturedAt: capturedAt.toISOString(),
+        assetId: asset.assetId,
+        fileName: asset.fileName,
+        fileSize: asset.fileSize,
+        width: asset.width,
+        height: asset.height,
+      });
+    }
+  };
+
+  const openPhotoSourcePicker = () => {
+    Keyboard.dismiss();
+    SooBottomSheet.push({
+      title: "Add Photo",
+      needPadding: false,
+      child: (
+        <View className="px-6 pb-8">
+          <Text className="text-sm text-gray-500 mb-4">
+            Choose a source for your report photo.
+          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              SooBottomSheet.pop();
+              void capturePhoto();
+            }}
+            className="flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border border-gray-100 mb-3"
+          >
+            <View className="w-10 h-10 rounded-full bg-black items-center justify-center">
+              <MaterialIcons name="photo-camera" size={20} color="#fff" />
+            </View>
+            <View className="ml-3">
+              <Text className="text-base font-semibold text-black">Camera</Text>
+              <Text className="text-xs text-gray-500">
+                Capture a new photo now
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              SooBottomSheet.pop();
+              void pickPhotoFromGallery();
+            }}
+            className="flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border border-gray-100"
+          >
+            <View className="w-10 h-10 rounded-full bg-black items-center justify-center">
+              <MaterialIcons name="photo-library" size={20} color="#fff" />
+            </View>
+            <View className="ml-3">
+              <Text className="text-base font-semibold text-black">
+                Gallery
+              </Text>
+              <Text className="text-xs text-gray-500">
+                Pick an existing photo
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  };
+
+  const removePhoto = (index: number) => {
+    const newPhotos = [...photos];
+    newPhotos.splice(index, 1);
+    setPhotos(newPhotos);
   };
 
   const onWasteTypeClicked = () => {
@@ -193,7 +491,9 @@ const SubmitReportTab: React.FC = () => {
         {/* Waste Type */}
         <View className="mb-4">
           <View className="flex-row justify-between items-center mb-2">
-            <Text className="text-sm font-medium text-gray-700">Waste Type</Text>
+            <Text className="text-sm font-medium text-gray-700">
+              Waste Type
+            </Text>
             <TouchableOpacity
               onPress={onOpenWasteTypeManual}
               className="flex-row items-center bg-gray-100 rounded-full px-3 py-1.5"
@@ -243,19 +543,29 @@ const SubmitReportTab: React.FC = () => {
           <Text className="text-sm font-medium text-gray-700 mb-2">
             Add Photos
           </Text>
+          <Text className="text-xs text-gray-500 mb-2">
+            Only photos captured within the last 24 hours are accepted.
+          </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <TouchableOpacity
-              onPress={pickImage}
+              onPress={openPhotoSourcePicker}
               className="w-24 h-24 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 items-center justify-center mr-3"
             >
-              <MaterialIcons name="add-a-photo" size={24} color="#9CA3AF" />
-              <Text className="text-xs text-gray-400 mt-1">Add Photo</Text>
+              <View className="w-8 h-8 rounded-full bg-black items-center justify-center">
+                <MaterialIcons name="add" size={20} color="#fff" />
+              </View>
+              <Text className="text-xs text-gray-700 mt-2 font-medium">
+                Add Photo
+              </Text>
             </TouchableOpacity>
-            {images.map((uri, index) => (
+            {photos.map((photo, index) => (
               <View key={index} className="relative mr-3">
-                <Image source={{ uri }} className="w-24 h-24 rounded-xl" />
+                <Image
+                  source={{ uri: photo.uri }}
+                  className="w-24 h-24 rounded-xl"
+                />
                 <TouchableOpacity
-                  onPress={() => removeImage(index)}
+                  onPress={() => removePhoto(index)}
                   className="absolute top-1 right-1 bg-black/50 rounded-full p-1"
                 >
                   <MaterialIcons name="close" size={16} color="white" />
@@ -273,14 +583,14 @@ const SubmitReportTab: React.FC = () => {
             !location ||
             !description ||
             !selectedType ||
-            images.length === 0
+            photos.length === 0
           }
           className={`bg-black py-4 rounded-full items-center shadow-lg ${
             loading ||
             !location ||
             !description ||
             !selectedType ||
-            images.length === 0
+            photos.length === 0
               ? "opacity-60"
               : ""
           }`}
