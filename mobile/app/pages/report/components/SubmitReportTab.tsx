@@ -600,8 +600,9 @@ const SubmitReportTab: React.FC = () => {
           </Text>
           <View className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-100 h-32">
             <TextInput
-              className="flex-1 text-black text-top"
+              className="flex-1 text-lg font-normal text-black"
               placeholder="Describe the issue..."
+              placeholderTextColor="#888"
               multiline
               textAlignVertical="top"
               value={description}

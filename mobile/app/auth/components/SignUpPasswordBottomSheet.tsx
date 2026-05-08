@@ -122,7 +122,9 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
     }
 
     const isExistingUser =
-      user !== null && Array.isArray(user.identities) && user.identities.length === 0;
+      user !== null &&
+      Array.isArray(user.identities) &&
+      user.identities.length === 0;
     if (isExistingUser) {
       console.log("signUp:existing-email-detected-by-identities", { email });
       setLoading(false);
@@ -205,7 +207,7 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
           <BottomSheetTextInput
             secureTextEntry={passwordVisibility}
             style={{ fontSize: 16 }}
-            className="flex-1"
+            className="flex-1 text-lg font-normal text-black"
             placeholder="Password"
             placeholderTextColor={"gray"}
             value={password}

@@ -291,13 +291,14 @@ const Login: React.FC = () => {
         <View className="h-6" />
         <View className="flex flex-col w-full">
           <View
-            className={`flex flex-row w-full mb-2 items-center justify-between bg-cardBg rounded-xl px-4 py-1 gap-1 
+            className={`flex flex-row w-full mb-2 items-center justify-between bg-cardBg rounded-xl px-4 py-1 gap-1
               ${isEmailFocused ? "border border-black" : ""} ${!isEmailValid && !isEmailFocused ? "border border-red-500" : ""}`}
           >
             <Fontisto name="email" size={20} color="black" />
             <TextInput
-              className="flex-1 text-lg"
+              className="flex-1 text-lg text-black"
               placeholder="Email"
+              placeholderTextColor="#888"
               value={email}
               onChangeText={onEmailTextChange}
               autoCapitalize={"none"}
@@ -327,8 +328,9 @@ const Login: React.FC = () => {
             <Feather name="lock" size={20} color="black" />
             <TextInput
               secureTextEntry={passwordVisibility}
-              className="flex-1 text-lg font-normal"
+              className="flex-1 text-lg font-normal text-black"
               placeholder="Password"
+              placeholderTextColor="#888"
               value={password}
               onChangeText={onPasswordTextChange}
               onFocus={() => setIsPasswordFocused(true)}

@@ -37,54 +37,61 @@ const CartPage: React.FC = () => {
 
   const fetchCartItems = async () => {
     if (!user) return;
-
     setLoading(true);
     try {
       const data = await getCartItems(user.id);
       if (data) {
-        const mappedItems: CartItem[] = data.map((record: any) => {
-          const item = record.item;
-          const seller = item.user;
+        const mappedItems: CartItem[] = data.reduce(
+          (acc: CartItem[], record: any) => {
+            const item = record?.item;
+            if (!item) return acc;
+            const seller = item.user;
 
-          let imageUrl = "";
-          if (Array.isArray(item.images) && item.images.length > 0) {
-            imageUrl = item.images[0];
-          } else if (typeof item.images === "string") {
-            try {
-              const parsed = JSON.parse(item.images);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                imageUrl = parsed[0];
-              } else {
+            let imageUrl = "";
+            if (Array.isArray(item.images) && item.images.length > 0) {
+              imageUrl = item.images[0];
+            } else if (typeof item.images === "string") {
+              try {
+                const parsed = JSON.parse(item.images);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  imageUrl = parsed[0];
+                } else {
+                  imageUrl = item.images;
+                }
+              } catch {
                 imageUrl = item.images;
               }
-            } catch {
-              imageUrl = item.images;
             }
-          }
 
-          return {
-            id: record.id,
-            itemId: item.id,
-            name: item.title,
-            price: item.price || 0,
-            seller: seller
-              ? `${seller.first_name} ${seller.last_name}`
-              : "Unknown Seller",
-            avatar:
-              seller?.avatar_url ||
-              "https://randomuser.me/api/portraits/lego/1.jpg",
-            image: imageUrl,
-            quantity: record.quantity,
-            location: item.location,
-            selected: false,
-            category: item.category,
-            isFree: item.is_free,
-            originalItem: {
-              user: seller,
-              listed_item: item,
-            },
-          };
-        });
+            acc.push({
+              id: record.id,
+              itemId: item.id,
+              name: item.title,
+              price: item.price || 0,
+              seller: seller
+                ? `${seller.first_name} ${seller.last_name}`
+                : "Unknown Seller",
+              avatar:
+                seller?.avatar_url ||
+                "https://randomuser.me/api/portraits/lego/1.jpg",
+              image: imageUrl,
+              quantity: record.quantity,
+              location: item.location,
+              selected: false,
+              category: item.category,
+              isFree: item.is_free,
+              originalItem: seller
+                ? {
+                    user: seller,
+                    listed_item: item,
+                  }
+                : undefined,
+            });
+
+            return acc;
+          },
+          [],
+        );
 
         setCartItems(mappedItems);
       }
@@ -146,18 +153,18 @@ const CartPage: React.FC = () => {
         return;
       }
       const duplicateItems: string[] = [];
-      const itemsToProcess = [];
+      const itemsToProcess: CartItem[] = [];
 
       for (const item of selectedItems) {
-        if (!item.originalItem?.listed_item.id || !item.originalItem.user.id) {
+        const listedItemId = item.originalItem?.listed_item?.id;
+        const sellerId = item.originalItem?.user?.id;
+
+        if (!listedItemId || !sellerId) {
           console.error("Invalid item data:", item);
           continue;
         }
 
-        const hasPending = await checkExistingRequest(
-          user.id,
-          item.originalItem.listed_item.id,
-        );
+        const hasPending = await checkExistingRequest(user.id, listedItemId);
 
         if (hasPending) {
           duplicateItems.push(item.name);
@@ -186,12 +193,17 @@ const CartPage: React.FC = () => {
       const successfulItemIds: string[] = [];
 
       for (const item of itemsToProcess) {
-        if (!user || !item.originalItem) return;
+        const listedItemId = item.originalItem?.listed_item?.id;
+        const sellerId = item.originalItem?.user?.id;
+        if (!user || !listedItemId || !sellerId) {
+          console.error("Invalid item data:", item);
+          continue;
+        }
         try {
           await createReservationRequest(
             user.id,
-            item.originalItem.user.id,
-            item.originalItem.listed_item.id,
+            sellerId,
+            listedItemId,
           );
           await removeFromCart(item.id);
           successfulItemIds.push(item.id);
@@ -334,7 +346,7 @@ const CartPage: React.FC = () => {
                                 </Text>
                               </View>
                               <Text className="text-sm font-semibold text-gray-800 mt-1">
-                                {(item as any).isFree
+                                {item.isFree
                                   ? "Free"
                                   : `RM ${item.price.toFixed(2)}`}
                               </Text>

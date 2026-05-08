@@ -50,9 +50,8 @@ const AuthCallback = () => {
         }
 
         if (typeof authCode === "string" && authCode.length > 0) {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(
-            authCode
-          );
+          const { data, error } =
+            await supabase.auth.exchangeCodeForSession(authCode);
 
           if (error) {
             console.error("Exchange code error:", error);

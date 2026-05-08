@@ -33,8 +33,10 @@ export interface MarketplaceItem {
 
 export interface CartItem {
   id: string;
+  itemId?: string;
   name: string;
   price: number;
+  isFree?: boolean;
   seller: string;
   avatar: string;
   image: string;

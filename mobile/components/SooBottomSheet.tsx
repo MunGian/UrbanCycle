@@ -52,7 +52,7 @@ const SooBottomSheet: React.FC<SooBottomSheetProps> = ({
   };
 
   const handleSheetChanges = useCallback((index: number) => {
-    console.log(`BottomSheet ${sheetId} index changed:`, index);
+    // console.log(`BottomSheet ${sheetId} index changed:`, index);
   }, []);
 
   const renderBackdrop = useCallback(

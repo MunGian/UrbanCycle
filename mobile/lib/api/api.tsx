@@ -67,7 +67,7 @@ export const getCartItems = async (userId: string) => {
       `
       id,
       quantity,
-      item:item_id (
+      item:item_id!inner (
         id,
         title,
         price,
@@ -77,7 +77,7 @@ export const getCartItems = async (userId: string) => {
         category,
         is_free,
         status,
-        user:user_id (
+        user:user_id!inner (
           id,
           first_name,
           last_name,
