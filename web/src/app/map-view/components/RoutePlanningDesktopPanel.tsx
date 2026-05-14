@@ -93,14 +93,18 @@ export function RoutePlanningDesktopPanel({
         </button>
       </div>
 
-      <div className="mt-3 flex items-center gap-4 text-xs text-slate-600">
+      <div className="mt-3 flex items-center gap-2 text-xs text-slate-600">
         <div className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
-          <span>Pending</span>
+          <span>Pending Approval</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
           <span>In Progress</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+          <span>Council HQ</span>
         </div>
       </div>
 
