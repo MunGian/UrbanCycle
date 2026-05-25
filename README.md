@@ -18,7 +18,7 @@ Both applications share the same backend domain model powered by Supabase.
     <img height="600" alt="download (1)" src="https://github.com/user-attachments/assets/131fbbcc-1d7d-4bcd-8939-1bd6c9504256" />
     <img height="600" alt="Screenshot_2026-05-25_195401-removebg-preview" src="https://github.com/user-attachments/assets/22fe3fe9-1b1e-4719-a901-8faf5f5070c4" />
   </p>
-  
+             
   <p float="left">
     <img height="600" alt="download 3 " src="https://github.com/user-attachments/assets/59b45d91-a14d-4702-b4eb-ab8c1bdaccb4" />
     <img height="600" alt="download4" src="https://github.com/user-attachments/assets/7ef41e68-7516-4689-8de4-1166773835b4" />
