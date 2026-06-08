@@ -155,6 +155,8 @@ const SignUpPasswordBottomSheet: React.FC<SignUpPasswordBottomSheetProps> = ({
     SooBottomSheet.push({
       title: "Verify your email",
       needPadding: true,
+      needCloseButton: false,
+      isDismissible: false,
       child: (
         <VerifyEmailOtpBottomSheet
           email={email}
