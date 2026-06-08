@@ -170,7 +170,9 @@ const MyListingsTab: React.FC<MyListingsTabProps> = ({
                 handleDelete(item);
               }, 500);
             } else if (value === "status") {
-              handleChangeStatus(item);
+              setTimeout(() => {
+                handleChangeStatus(item);
+              }, 500);
             }
           }}
         />
