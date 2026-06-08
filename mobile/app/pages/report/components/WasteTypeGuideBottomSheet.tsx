@@ -125,9 +125,6 @@ const WasteTypeGuideBottomSheet: React.FC = () => {
                     </View>
                   ))}
                 </View>
-                <Text className="text-xs text-gray-400">
-                  Do not pick this type for: {item.avoid.join(", ")}
-                </Text>
               </View>
             );
           })}
