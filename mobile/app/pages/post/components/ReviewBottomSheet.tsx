@@ -5,12 +5,12 @@ import {
   ActivityIndicator,
   Alert,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SooBottomSheet } from "@/components/SooBottomSheetController";
 import AlertModal from "@/components/AlertModal";
+import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 
 interface ReviewBottomSheetProps {
   transactionId: string;
@@ -86,7 +86,7 @@ const ReviewBottomSheet: React.FC<ReviewBottomSheetProps> = ({
       <Text className="text-sm font-medium mb-2 text-gray-700">
         Comments (Optional)
       </Text>
-      <TextInput
+      <BottomSheetTextInput
         className="bg-gray-50 border border-gray-200 rounded-xl p-3 h-24 mb-6 text-base"
         placeholder="How was your experience?"
         multiline
